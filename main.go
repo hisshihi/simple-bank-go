@@ -3,22 +3,18 @@ package main
 import (
 	"log"
 
-	"github.com/hisshihi/simple-bank/db"
+	"github.com/hisshihi/simple-bank/core/app"
+	"github.com/hisshihi/simple-bank/util"
 )
 
 func main() {
-	config := db.DBConfig{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "root",
-		Password: "secret",
-		DBName:   "simple_bank",
-		DBType:   "postgres",
-		SSLMode:  "disable",
+	config, err := util.LoadConfig(".")
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
 	}
 
-	_, err := db.InitDB(config, &db.Account{}, &db.Entry{}, &db.Transaction{})
+	_, err = app.NewContainer(config)
 	if err != nil {
-		log.Fatalf("Не удалось подключиться к базе данных: %v", err)
+		log.Fatalf("failed to create app container: %v", err)
 	}
 }
