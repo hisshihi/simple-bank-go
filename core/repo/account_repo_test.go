@@ -106,7 +106,7 @@ func TestFindAccountByID(t *testing.T) {
 
 			// Act
 			account, err := repo.FindByID(ctx, accountID)
-			
+
 			// Assert
 			if tt.wantErr != nil {
 				assertErrorIs(t, err, tt.wantErr)

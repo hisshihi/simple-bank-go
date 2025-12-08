@@ -19,8 +19,8 @@ func NewAccountRepo(db *gorm.DB) *accountRepo {
 
 func (r *accountRepo) Create(ctx context.Context, owner string, balance float64, currency string) error {
 	account := &db.Account{
-		Owner: owner,
-		Balance: balance,
+		Owner:    owner,
+		Balance:  balance,
 		Currency: db.Currency(currency),
 	}
 	return gorm.G[db.Account](r.db).Create(ctx, account)

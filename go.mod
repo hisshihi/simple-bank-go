@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	github.com/spf13/viper v1.21.0
 	gorm.io/driver/postgres v1.6.0
+	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.31.1
 )
 
@@ -30,5 +31,4 @@ require (
 	golang.org/x/sync v0.18.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
-	gorm.io/driver/sqlite v1.6.0 // indirect
 )
