@@ -1,8 +1,17 @@
 package db
 
-import "gorm.io/gorm"
+import (
+	"errors"
+
+	"gorm.io/gorm"
+)
 
 type Currency string
+
+var (
+	ErrRecordNotFound = errors.New("аккаунт не найден")
+	ErrInQuery        = errors.New("ошибка при выполнении запроса к базе данных")
+)
 
 const (
 	USD Currency = "USD"
