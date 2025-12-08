@@ -39,3 +39,17 @@ func (r *AccountRepo) FindByID(ctx context.Context, id uint) (*db.Account, error
 
 	return &account, nil
 }
+
+func (r *AccountRepo) FindAllAccounts(ctx context.Context) ([]db.Account, error) {
+	result := gorm.WithResult()
+	accounts, err := gorm.G[db.Account](r.db, result).Find(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", db.ErrInQuery.Error(), err)
+	}
+
+	if len(accounts) == 0 {
+		return []db.Account{}, nil
+	}
+
+	return accounts, nil
+}

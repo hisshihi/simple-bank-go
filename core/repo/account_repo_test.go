@@ -121,6 +121,24 @@ func TestFindAccountByID(t *testing.T) {
 	}
 }
 
+func TestFindAllAccounts(t *testing.T) {
+	testDB := setupTestDB(t)
+	repo := NewAccountRepo(testDB)
+	ctx := context.Background()
+
+	_, err := createAccountAndReturnResult(t, testDB, "hiss", 500.00, db.USD)
+	assertNoError(t, err)
+	_, err = createAccountAndReturnResult(t, testDB, "hiss2", 500.00, db.USD)
+	assertNoError(t, err)
+
+	accounts, err := repo.FindAllAccounts(ctx)
+	assertNoError(t, err)
+
+	if len(accounts) != 2 {
+		t.Fatalf("expected 2 accounts, got %d", len(accounts))
+	}
+}
+
 func createAccountAndReturnResult(t testing.TB, testDB *gorm.DB, owner string, balance float64, currency db.Currency) (*db.Account, error) {
 	t.Helper()
 

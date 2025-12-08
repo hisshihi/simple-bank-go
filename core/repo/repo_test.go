@@ -15,7 +15,7 @@ func setupTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 
 	database, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 	if err != nil {
 		t.Fatalf("failed to connect to test database: %v", err)
