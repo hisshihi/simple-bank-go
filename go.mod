@@ -1,6 +1,6 @@
 module github.com/hisshihi/simple-bank
 
-go 1.24.2
+go 1.25.3
 
 require (
 	github.com/spf13/viper v1.21.0
