@@ -3,21 +3,22 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hisshihi/simple-bank/core/db"
 	"gorm.io/gorm"
 )
 
-type accountRepo struct {
+type AccountRepo struct {
 	db *gorm.DB
 }
 
-func NewAccountRepo(db *gorm.DB) *accountRepo {
-	return &accountRepo{db: db}
+func NewAccountRepo(db *gorm.DB) *AccountRepo {
+	return &AccountRepo{db: db}
 }
 
-func (r *accountRepo) Create(ctx context.Context, owner string, balance float64, currency string) error {
+func (r *AccountRepo) Create(ctx context.Context, owner string, balance float64, currency string) error {
 	account := &db.Account{
 		Owner:    owner,
 		Balance:  balance,
@@ -26,11 +27,11 @@ func (r *accountRepo) Create(ctx context.Context, owner string, balance float64,
 	return gorm.G[db.Account](r.db).Create(ctx, account)
 }
 
-func (r *accountRepo) FindByID(ctx context.Context, id uint) (*db.Account, error) {
+func (r *AccountRepo) FindByID(ctx context.Context, id uint) (*db.Account, error) {
 	result := gorm.WithResult()
 	account, err := gorm.G[db.Account](r.db, result).Where("id = ?", id).First(ctx)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, db.ErrRecordNotFound
 		}
 		return nil, fmt.Errorf("%s: %w", db.ErrInQuery.Error(), err)

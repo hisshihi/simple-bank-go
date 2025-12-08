@@ -5,12 +5,18 @@ import (
 	"log"
 
 	"github.com/hisshihi/simple-bank/core/db"
+	"github.com/hisshihi/simple-bank/core/repo"
+	"github.com/hisshihi/simple-bank/core/service"
 	"github.com/hisshihi/simple-bank/util"
 	"gorm.io/gorm"
 )
 
 type Container struct {
+	// DB connections
 	SimpleBankDB *gorm.DB
+
+	// Services
+	AccountService *service.AccountService
 }
 
 func newConn(host, port, user, password, dbName, dbType, sslMode string, models ...interface{}) (*gorm.DB, error) {
@@ -50,7 +56,14 @@ func NewContainer(config util.Config) (*Container, error) {
 		return nil, err
 	}
 
+	// Repositories
+	accountRepo := repo.NewAccountRepo(simpleBankDB)
+
+	// Services
+	accountService := service.NewAccountService(accountRepo)
+
 	return &Container{
-		SimpleBankDB: simpleBankDB,
+		SimpleBankDB:   simpleBankDB,
+		AccountService: accountService,
 	}, nil
 }
