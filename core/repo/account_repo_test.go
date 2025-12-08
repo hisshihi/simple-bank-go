@@ -122,20 +122,57 @@ func TestFindAccountByID(t *testing.T) {
 }
 
 func TestFindAllAccounts(t *testing.T) {
-	testDB := setupTestDB(t)
-	repo := NewAccountRepo(testDB)
-	ctx := context.Background()
+	tests := []struct {
+		name         string
+		setup        func(t *testing.T, db *gorm.DB)
+		accountCount int
+		wantErr      error
+	}{
+		{
+			name: "success - multiple accounts",
+			setup: func(t *testing.T, database *gorm.DB) {
+				_, err := createAccountAndReturnResult(t, database, "hiss", 500.00, db.USD)
+				assertNoError(t, err)
+				_, err = createAccountAndReturnResult(t, database, "hiss", 500.00, db.USD)
+				assertNoError(t, err)
+			},
+			accountCount: 2,
+			wantErr:      nil,
+		},
+		{
+			name: "success - no accounts",
+			setup: func(t *testing.T, db *gorm.DB) {
+				// ничего не создаем
+			},
+			accountCount: 0,
+			wantErr:      nil,
+		},
+	}
 
-	_, err := createAccountAndReturnResult(t, testDB, "hiss", 500.00, db.USD)
-	assertNoError(t, err)
-	_, err = createAccountAndReturnResult(t, testDB, "hiss2", 500.00, db.USD)
-	assertNoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testDB := setupTestDB(t)
+			repo := NewAccountRepo(testDB)
+			ctx := context.Background()
 
-	accounts, err := repo.FindAllAccounts(ctx)
-	assertNoError(t, err)
+			if tt.setup != nil {
+				tt.setup(t, testDB)
+			}
 
-	if len(accounts) != 2 {
-		t.Fatalf("expected 2 accounts, got %d", len(accounts))
+			// Act
+			accounts, err := repo.FindAllAccounts(ctx)
+
+			// Assert
+			if tt.wantErr != nil {
+				assertErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			assertNoError(t, err)
+			if len(accounts) != tt.accountCount {
+				t.Fatalf("expected %d accounts, got %d", tt.accountCount, len(accounts))
+			}
+		})
 	}
 }
 
