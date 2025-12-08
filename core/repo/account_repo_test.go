@@ -176,6 +176,69 @@ func TestFindAllAccounts(t *testing.T) {
 	}
 }
 
+func TestUpdateAccountBalance(t *testing.T) {
+	tests := []struct {
+		name       string
+		accountID  uint
+		newBalance float64
+		setup      func(t *testing.T, db *gorm.DB) uint
+		wantErr    error
+	}{
+		{
+			name:       "success - update balance",
+			accountID:  1,
+			newBalance: 2000.00,
+			setup: func(t *testing.T, database *gorm.DB) uint {
+				account, err := createAccountAndReturnResult(t, database, "hiss", 1000.00, db.RUB)
+				assertNoError(t, err)
+				return account.ID
+			},
+			wantErr: nil,
+		},
+		{
+			name:       "error - account not found",
+			accountID:  999,
+			newBalance: 1500.00,
+			setup: func(t *testing.T, db *gorm.DB) uint {
+				// ничего не создаем
+				return 999
+			},
+			wantErr: db.ErrRecordNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testDB := setupTestDB(t)
+			repo := NewAccountRepo(testDB)
+			ctx := context.Background()
+
+			accountID := tt.accountID
+			if tt.setup != nil {
+				accountID = tt.setup(t, testDB)
+			}
+
+			// Act
+			err := repo.UpdateBalance(ctx, accountID, tt.newBalance)
+
+			// Assert
+			if tt.wantErr != nil {
+				assertErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			assertNoError(t, err)
+
+			// Verify the balance was updated
+			updatedAccount, err := repo.FindByID(ctx, accountID)
+			assertNoError(t, err)
+			if updatedAccount.Balance != tt.newBalance {
+				t.Fatalf("expected balance %f, got %f", tt.newBalance, updatedAccount.Balance)
+			}
+		})
+	}
+}
+
 func createAccountAndReturnResult(t testing.TB, testDB *gorm.DB, owner string, balance float64, currency db.Currency) (*db.Account, error) {
 	t.Helper()
 
