@@ -57,13 +57,23 @@ func (r *AccountRepo) FindAllAccounts(ctx context.Context) ([]db.Account, error)
 func (r *AccountRepo) UpdateBalance(ctx context.Context, id uint, balance float64) error {
 	rowsUpdated, err := gorm.G[db.Account](r.db).Where("id = ?", id).Update(ctx, "balance", balance)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return db.ErrRecordNotFound
-		}
 		return fmt.Errorf("%s: %w", db.ErrInQuery.Error(), err)
 	}
 
 	if rowsUpdated == 0 {
+		return db.ErrRecordNotFound
+	}
+
+	return nil
+}
+
+func (r *AccountRepo) Delete(ctx context.Context, id uint) error {
+	rowsDeleted, err := gorm.G[db.Account](r.db).Where("id = ?", id).Delete(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", db.ErrInQuery.Error(), err)
+	}
+
+	if rowsDeleted == 0 {
 		return db.ErrRecordNotFound
 	}
 

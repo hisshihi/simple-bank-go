@@ -239,6 +239,61 @@ func TestUpdateAccountBalance(t *testing.T) {
 	}
 }
 
+func TestDeleteAccount(t *testing.T) {
+	tests := []struct {
+		name      string
+		accountID uint
+		setup     func(t *testing.T, db *gorm.DB) uint
+		wantErr   error
+	}{
+		{
+			name: "success - delete existing account",
+			setup: func(t *testing.T, database *gorm.DB) uint {
+				account, err := createAccountAndReturnResult(t, database, "to_delete", 100.00, db.USD)
+				assertNoError(t, err)
+				return account.ID
+			},
+			wantErr: nil,
+		},
+		{
+			name: "error - delete non-existing account",
+			setup: func(t *testing.T, db *gorm.DB) uint {
+				// ничего не создаем
+				return 999
+			},
+			wantErr: db.ErrRecordNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testDB := setupTestDB(t)
+			repo := NewAccountRepo(testDB)
+			ctx := context.Background()
+
+			accountID := tt.accountID
+			if tt.setup != nil {
+				accountID = tt.setup(t, testDB)
+			}
+
+			// Act
+			err := repo.Delete(ctx, accountID)
+
+			// Assert
+			if tt.wantErr != nil {
+				assertErrorIs(t, err, tt.wantErr)
+				return
+			}
+
+			assertNoError(t, err)
+
+			// Verify the account was deleted
+			_, err = repo.FindByID(ctx, accountID)
+			assertErrorIs(t, err, db.ErrRecordNotFound)
+		})
+	}
+}
+
 func createAccountAndReturnResult(t testing.TB, testDB *gorm.DB, owner string, balance float64, currency db.Currency) (*db.Account, error) {
 	t.Helper()
 
