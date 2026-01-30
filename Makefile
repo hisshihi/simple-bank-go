@@ -1,22 +1,92 @@
-postgres:
-	docker run --name postgres17 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret -p 5432:5432 -d postgres:17-alpine
+SHELL := /bin/bash
 
-createdb:
-	docker exec -it postgres17 createdb --username=root --owner=root simple_bank
+.DEFAULT_GOAL := all
 
-dropdb:
-	docker exec -it postgres17 dropdb simple_bank
+# renovate: datasource=docker depName=ghcr.io/igorshubovych/markdownlint-cli versioning=docker
+MARKDOWNLINT_VERSION = sha256:9f06c8c9a75aa08b87b235b66d618f7df351f09f08faf703177f670e38ee6511 # v0.47.0
 
-migrateup:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
+.PHONY: all
+all: ## build pipeline
+all: mdlint mod gen build spell lint test
 
-migratedown:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+.PHONY: precommit
+precommit: ## validate the branch before commit
+precommit: all vuln
 
-run:
-	go run main.go
+.PHONY: ci
+ci: ## CI build pipeline
+ci: precommit diff
 
-test:
-	go test -v -cover ./...
+.PHONY: help
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
-.PHONY: postgres createdb dropdb migrateup migratedown run test test-all
+.PHONY: mdlint
+mdlint: ## markdownlint
+ifneq ($(filter 1 true,$(SKIP_DOCKER)),)
+	@echo "Skipping $(@) per SKIP_DOCKER=$(SKIP_DOCKER)"
+else
+	docker run --rm -v "$(PWD):/workdir" ghcr.io/igorshubovych/markdownlint-cli@$(MARKDOWNLINT_VERSION) "**/*.md"
+endif
+
+.PHONY: clean
+clean: ## remove files created during build pipeline
+	rm -rf dist
+	rm -f coverage.*
+	rm -f '"$(shell go env GOCACHE)/../golangci-lint"'
+	go clean -i -cache -testcache -modcache -fuzzcache -x
+
+.PHONY: run
+run: ## go run
+	go run .
+
+.PHONY: mod
+mod: ## go mod tidy
+	go mod tidy
+
+.PHONY: gen
+gen: ## go generate
+	go generate ./...
+
+.PHONY: build
+build: ## goreleaser build
+	goreleaser build --clean --single-target --snapshot
+
+.PHONY: spell
+spell: ## misspell
+	misspell -error -locale=US -w **.md
+
+.PHONY: lint
+lint: ## golangci-lint
+	golangci-lint run --fix
+
+.PHONY: vuln
+vuln: ## govulncheck
+	govulncheck ./...
+
+ifeq ($(CGO_ENABLED),0)
+RACE_OPT =
+else
+RACE_OPT = -race
+endif
+
+.PHONY: test
+test: ## go test
+	go test $(RACE_OPT) -covermode=atomic -coverprofile=coverage.out -coverpkg=./... ./...
+	go tool cover -html=coverage.out -o coverage.html
+
+.PHONY: diff
+diff: ## git diff
+	git diff --exit-code
+	RES=$$(git status --porcelain) ; if [ -n "$$RES" ]; then echo $$RES && exit 1 ; fi
+
+.PHONY: proto
+proto:
+	rm -f pb/*.go
+	protoc --proto_path=proto --go_out=pb --go_opt=paths=source_relative \
+  --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
+  proto/*.proto
+
+.PHONY: evans
+evans:
+	evans --port 9092 --host localhost --path proto --proto verify.proto repl
