@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
@@ -10,6 +12,8 @@ type Transfer struct {
 	FromAccountID uuid.UUID `db:"from_account_id"`
 	ToAccountID   uuid.UUID `db:"to_account_id"`
 	Amount        int64     `db:"amount"`
+	CreatedAt     time.Time `db:"created_at"`
+	UpdatedAt     time.Time `db:"updated_at"`
 }
 
 func NewTransfer(id, fromAccountID, toAccountID uuid.UUID, amount int64) (*Transfer, error) {

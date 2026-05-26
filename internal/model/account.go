@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	errs "github.com/hisshihi/simple-bank/internal/errors"
@@ -25,10 +26,12 @@ var validCurrency = map[CurrencyType]struct{}{
 }
 
 type Account struct {
-	ID       uuid.UUID    `db:"id"`
-	Owner    string       `db:"owner"`
-	Balance  float64      `db:"balance"`
-	Currency CurrencyType `db:"currency"`
+	ID        uuid.UUID    `db:"id"`
+	Owner     string       `db:"owner"`
+	Balance   float64      `db:"balance"`
+	Currency  CurrencyType `db:"currency"`
+	CreatedAt time.Time    `db:"created_at"`
+	UpdatedAt time.Time    `db:"updated_at"`
 }
 
 func NewAccount(id uuid.UUID, owner string, balance float64, currency CurrencyType) (*Account, error) {
