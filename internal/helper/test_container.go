@@ -47,6 +47,10 @@ func TestSetupPool(m *testing.M) (code int) {
 	}
 	defer testPool.Close()
 
+	if err = runMigration(ctx, testPool); err != nil {
+		log.Fatalf("error running migration: %v", err)
+	}
+
 	return m.Run()
 }
 
