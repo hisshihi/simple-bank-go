@@ -1,8 +1,6 @@
 package model
 
 import (
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,23 +16,16 @@ var (
 	CurrencyTypeYEN CurrencyType = "YEN"
 )
 
-var validCurrency = map[CurrencyType]struct{}{
-	CurrencyTypeUSD: {},
-	CurrencyTypeRUB: {},
-	CurrencyTypeEUR: {},
-	CurrencyTypeYEN: {},
-}
-
 type Account struct {
-	ID        uuid.UUID    `db:"id"`
-	Owner     string       `db:"owner"`
-	Balance   float64      `db:"balance"`
-	Currency  CurrencyType `db:"currency"`
-	CreatedAt time.Time    `db:"created_at"`
-	UpdatedAt time.Time    `db:"updated_at"`
+	id        uuid.UUID    `db:"id"`
+	owner     string       `db:"owner"`
+	balance   float64      `db:"balance"`
+	currency  CurrencyType `db:"currency"`
+	createdAt time.Time    `db:"created_at"`
+	updatedAt time.Time    `db:"updated_at"`
 }
 
-func NewAccount(id uuid.UUID, owner string, balance float64, currency CurrencyType) (*Account, error) {
+func NewAccount(id uuid.UUID, owner string, balance float64, accCurrency string) (*Account, error) {
 	if id == uuid.Nil {
 		return nil, errs.ErrInvalidAccountID
 	}
@@ -43,28 +34,17 @@ func NewAccount(id uuid.UUID, owner string, balance float64, currency CurrencyTy
 		return nil, errs.ErrBalanceIsLessThanZero
 	}
 
-	validateCurrency, err := CheckCurrency(string(currency))
-	if err != nil {
+	currency := CurrencyType(accCurrency)
+	switch currency {
+	case CurrencyTypeEUR, CurrencyTypeUSD, CurrencyTypeYEN, CurrencyTypeRUB:
+		account := &Account{
+			id:       id,
+			owner:    owner,
+			balance:  balance,
+			currency: currency,
+		}
+		return account, nil
+	default:
 		return nil, errs.ErrCurrencyIsNotSupported
 	}
-
-	return &Account{
-		ID:       id,
-		Owner:    owner,
-		Balance:  balance,
-		Currency: *validateCurrency,
-	}, nil
-}
-
-func CheckCurrency(currency string) (*CurrencyType, error) {
-	if currency == "" {
-		return nil, errors.New("currency is empty")
-	}
-
-	c := CurrencyType(currency)
-	if _, ok := validCurrency[c]; !ok {
-		return nil, fmt.Errorf("invalid currency %s", currency)
-	}
-
-	return &c, nil
 }
