@@ -8,9 +8,9 @@ CREATE TABLE transfers (
     updated_at timestamptz not null default now()
 );
 
-create index idx_entries_from_account_id on transfers(from_account_id);
-create index idx_entries_to_account_id on transfers(to_account_id);
-create index idx_entries_account_ids on transfers(from_account_id, to_account_id);
+create index idx_transfers_from_account_id on transfers(from_account_id);
+create index idx_transfers_to_account_id on transfers(to_account_id);
+create index idx_transfers_account_ids on transfers(from_account_id, to_account_id);
 
 -- +goose Down
-SELECT 'down SQL query';
+DROP TABLE transfers;

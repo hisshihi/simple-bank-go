@@ -7,44 +7,38 @@ import (
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
 
-type CurrencyType string
+type AccountStatus string
 
-var (
-	CurrencyTypeUSD CurrencyType = "USD"
-	CurrencyTypeRUB CurrencyType = "RUB"
-	CurrencyTypeEUR CurrencyType = "EUR"
-	CurrencyTypeYEN CurrencyType = "YEN"
+type Clock func() time.Time
+
+const (
+	AccountStatusActive  AccountStatus = "active"
+	AccountStatusBlocked AccountStatus = "blocked"
 )
 
 type Account struct {
-	id        uuid.UUID    `db:"id"`
-	owner     string       `db:"owner"`
-	balance   float64      `db:"balance"`
-	currency  CurrencyType `db:"currency"`
-	createdAt time.Time    `db:"created_at"`
-	updatedAt time.Time    `db:"updated_at"`
+	id        uuid.UUID     `db:"id"`
+	owner     string        `db:"owner"`
+	balance   Money         `db:"balance"`
+	currency  Currency      `db:"currency"`
+	createdAt time.Time     `db:"created_at"`
+	status    AccountStatus `db:"status"`
 }
 
-func NewAccount(id uuid.UUID, owner string, balance float64, accCurrency string) (*Account, error) {
+func NewAccount(id uuid.UUID, owner string, currency Currency, clock Clock) (*Account, error) {
 	if id == uuid.Nil {
 		return nil, errs.ErrInvalidAccountID
 	}
 
-	if balance < 0 {
-		return nil, errs.ErrBalanceIsLessThanZero
+	if owner == "" {
+		return nil, errs.ErrOwnerRequired
 	}
 
-	currency := CurrencyType(accCurrency)
-	switch currency {
-	case CurrencyTypeEUR, CurrencyTypeUSD, CurrencyTypeYEN, CurrencyTypeRUB:
-		account := &Account{
-			id:       id,
-			owner:    owner,
-			balance:  balance,
-			currency: currency,
-		}
-		return account, nil
-	default:
-		return nil, errs.ErrCurrencyIsNotSupported
-	}
+	return &Account{
+		id:        id,
+		owner:     owner,
+		balance:   Money{amount: 0, currency: currency},
+		createdAt: clock(),
+		status:    AccountStatusActive,
+	}, nil
 }

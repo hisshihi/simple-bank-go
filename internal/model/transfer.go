@@ -13,10 +13,9 @@ type Transfer struct {
 	ToAccountID   uuid.UUID `db:"to_account_id"`
 	Amount        int64     `db:"amount"`
 	CreatedAt     time.Time `db:"created_at"`
-	UpdatedAt     time.Time `db:"updated_at"`
 }
 
-func NewTransfer(id, fromAccountID, toAccountID uuid.UUID, amount int64) (*Transfer, error) {
+func NewTransfer(id, fromAccountID, toAccountID uuid.UUID, amount int64, createdAt Clock) (*Transfer, error) {
 	if id == uuid.Nil {
 		return nil, errs.ErrInvalidTransferID
 	}
@@ -34,5 +33,6 @@ func NewTransfer(id, fromAccountID, toAccountID uuid.UUID, amount int64) (*Trans
 		FromAccountID: fromAccountID,
 		ToAccountID:   toAccountID,
 		Amount:        amount,
+		CreatedAt:     createdAt(),
 	}, nil
 }

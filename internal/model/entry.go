@@ -12,10 +12,9 @@ type Entry struct {
 	AccountID uuid.UUID `db:"account_id"`
 	Amount    int64     `db:"amount"`
 	CreatedAt time.Time `db:"created_at"`
-	UpdatedAt time.Time `db:"updated_at"`
 }
 
-func NewEntry(id uuid.UUID, accountID uuid.UUID, amount int64) (*Entry, error) {
+func NewEntry(id uuid.UUID, accountID uuid.UUID, amount int64, clock Clock) (*Entry, error) {
 	if id == uuid.Nil {
 		return nil, errs.ErrInvalidEntryID
 	}
@@ -28,5 +27,6 @@ func NewEntry(id uuid.UUID, accountID uuid.UUID, amount int64) (*Entry, error) {
 		ID:        id,
 		AccountID: accountID,
 		Amount:    amount,
+		CreatedAt: clock(),
 	}, nil
 }
