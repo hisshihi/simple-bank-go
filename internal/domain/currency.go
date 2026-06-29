@@ -1,4 +1,4 @@
-package model
+package domain
 
 import (
 	errs "github.com/hisshihi/simple-bank/internal/errors"

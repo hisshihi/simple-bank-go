@@ -1,4 +1,4 @@
-package model
+package domain
 
 import (
 	"time"
@@ -39,6 +39,44 @@ func NewAccount(id uuid.UUID, owner string, currency Currency, clock Clock) (*Ac
 		owner:     owner,
 		balance:   Money{amount: 0, currency: currency},
 		createdAt: clock(),
+		currency:  currency,
 		status:    AccountStatusActive,
 	}, nil
+}
+
+func RestoreAccount(
+	id uuid.UUID,
+	owner string,
+	balance Money,
+	currency Currency,
+	createdAt time.Time,
+	status AccountStatus,
+) *Account {
+	return &Account{
+		id:        id,
+		owner:     owner,
+		balance:   balance,
+		currency:  currency,
+		createdAt: createdAt,
+		status:    status,
+	}
+}
+
+func (a *Account) ID() uuid.UUID {
+	return a.id
+}
+func (a *Account) Owner() string {
+	return a.owner
+}
+func (a *Account) Currency() Currency {
+	return a.currency
+}
+func (a *Account) Balance() Money {
+	return a.balance
+}
+func (a *Account) CreatedAt() time.Time {
+	return a.createdAt
+}
+func (a *Account) Status() AccountStatus {
+	return a.status
 }
