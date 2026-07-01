@@ -1,0 +1,97 @@
+version: "2"
+
+run:
+  timeout: 3m
+
+linters:
+  default: none
+  enable:
+    # Correctness (критичные)
+    - bodyclose
+    - contextcheck
+    - errcheck
+    - errorlint
+    - exhaustive
+    - govet
+    - ineffassign
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - unused
+
+    # Security
+    - gosec
+
+    # Performance
+    - copyloopvar
+    - noctx
+    - perfsprint
+    - prealloc
+
+    # Code quality
+    - gocyclo
+    - funlen
+    - goconst
+    - gocritic
+    - misspell
+    - nakedret
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+
+    # Style (минимум)
+    - goprintffuncname
+    - nolintlint
+    - whitespace
+
+  exclusions:
+    rules:
+      - path: '_test\.go'
+        linters:
+          - errcheck
+          - gosec
+          - funlen
+          - gocyclo
+      - path: 'mocks/'
+        linters:
+          - all
+      - path: '_mock\.go'
+        linters:
+          - all
+
+  settings:
+    funlen:
+      lines: 150
+      statements: 80
+    gocyclo:
+      min-complexity: 20
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+    revive:
+      confidence: 0.8
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: dot-imports
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: exported
+        - name: increment-decrement
+        - name: var-naming
+        - name: package-comments
+          disabled: true
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    gosec:
+      excludes:
+        - G404 # weak random - если не crypto
+    exhaustive:
+      default-signifies-exhaustive: true

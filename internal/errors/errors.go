@@ -9,6 +9,7 @@ var (
 	ErrOwnerRequired          = errors.New("owner is required")
 	ErrCurrencyMismatch       = errors.New("currency mismatch")
 	ErrInsufficientFunds      = errors.New("insufficient funds")
+	ErrAccountNotFound        = errors.New("account not found")
 )
 
 var (

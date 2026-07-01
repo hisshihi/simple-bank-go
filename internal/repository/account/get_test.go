@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hisshihi/simple-bank/internal/domain"
+	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/hisshihi/simple-bank/internal/helper"
 	"github.com/stretchr/testify/require"
 )
@@ -44,11 +45,28 @@ func TestRepo_GetByID(t *testing.T) {
 		require.NoError(t, err)
 
 		findAccount, err := repo.GetByID(context.Background(), fakeID)
-		require.NoError(t, err)
+		require.ErrorIs(t, err, errs.ErrAccountNotFound)
 		require.Nil(t, findAccount)
 	})
 	t.Run("other error", func(t *testing.T) {
-		_, err := domain.NewCurrency("YAN")
+		tx := helper.NewTx(t)
+		repo := New(tx)
+
+		newCurrency, err := domain.NewCurrency("RUB")
+		require.NoError(t, err)
+
+		id, err := uuid.NewV7()
+		require.NoError(t, err)
+		newAccount, err := domain.NewAccount(id, "hiss", newCurrency, fixedClock)
+		require.NoError(t, err)
+
+		account, err := repo.Create(context.Background(), newAccount)
+		require.NoError(t, err)
+
+		ctxWithCancel, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		_, err = repo.GetByID(ctxWithCancel, account.ID())
 		require.Error(t, err)
 
 	})
