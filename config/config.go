@@ -12,6 +12,10 @@ type Config struct {
 	DBUser string `env:"DB_USER,required"`
 	DBPass string `env:"DB_PASS,required"`
 	DBName string `env:"DB_NAME,required"`
+
+	//	Logger
+	LoggerLevel  string `env:"LOGGER_LEVEL" envDefault:"debug"`
+	LoggerPretty bool   `env:"LOGGER_PRETTY" envDefault:"true"`
 }
 
 func (c Config) DSN() string {

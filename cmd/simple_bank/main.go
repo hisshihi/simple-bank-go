@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"log/slog"
 
 	"github.com/hisshihi/simple-bank/config"
 	"github.com/hisshihi/simple-bank/internal/app"
+	"github.com/hisshihi/simple-bank/internal/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -14,8 +16,22 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	logger.Init(parseLogLevel(cfg.LoggerLevel), cfg.LoggerPretty)
 	err = app.New(&cfg).Run()
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func parseLogLevel(logLevel string) slog.Level {
+	switch logLevel {
+	case "debug":
+		return slog.LevelDebug
+	case "warn", "warning":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
 	}
 }
