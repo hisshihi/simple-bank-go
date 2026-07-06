@@ -43,14 +43,14 @@ func (a *App) Run() error {
 	_, shutdownCancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer shutdownCancel()
 
-	slog.Info("сервер остановлен")
-
 	closerCtx, closerCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer closerCancel()
 
 	if err := closer.CloseAll(closerCtx); err != nil {
 		slog.Error("ошибки при закрытии ресурсов", "err", err)
 	}
+
+	slog.Info("сервер остановлен")
 
 	return nil
 }

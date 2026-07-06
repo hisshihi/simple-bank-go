@@ -12,9 +12,9 @@ func Init(level slog.Level, pretty bool) {
 	var handler slog.Handler
 	opts := &slog.HandlerOptions{Level: level, AddSource: true}
 	if pretty {
-		handler = slog.NewTextHandler(os.Stdin, opts)
+		handler = slog.NewTextHandler(os.Stderr, opts)
 	} else {
-		handler = slog.NewJSONHandler(os.Stdin, opts)
+		handler = slog.NewJSONHandler(os.Stderr, opts)
 	}
 	slog.SetDefault(slog.New(handler))
 }

@@ -15,9 +15,10 @@ type closerFn struct {
 }
 
 type closer struct {
-	mu    sync.Mutex
-	once  sync.Once
-	funcs []closerFn
+	mu     sync.Mutex
+	once   sync.Once
+	funcs  []closerFn
+	result error
 }
 
 var globalCloser = &closer{}
@@ -38,8 +39,6 @@ func (c *closer) add(name string, fn func(ctx context.Context) error) {
 }
 
 func (c *closer) closeAll(ctx context.Context) error {
-	var result error
-
 	c.once.Do(func() {
 		c.mu.Lock()
 		funcs := c.funcs
@@ -98,13 +97,25 @@ func (c *closer) closeAll(ctx context.Context) error {
 					"duration", time.Since(start),
 				)
 				errs = append(errs, fmt.Errorf("ресурс %q завис при закрытии: %w", f.name, ctx.Err()))
+
+				// Не бросаем зависшую горутину. Дожидаемся её завершения(ошибки) и логируем
+				go func(name string, start time.Time, done <-chan error) {
+					err := <-done
+					if err != nil {
+						slog.Warn("ресурс закрылся с опозданием/ошибкой",
+							"name", name, "duration", time.Since(start), "error", err)
+					} else {
+						slog.Warn("ресурс закрылся с опозданием",
+							"name", name, "duration", time.Since(start))
+					}
+				}(f.name, start, done)
 			}
 		}
 
 		slog.Info("плавное завершение завершено")
 
-		result = errors.Join(errs...)
+		c.result = errors.Join(errs...)
 	})
 
-	return result
+	return c.result
 }
