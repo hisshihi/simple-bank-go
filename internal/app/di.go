@@ -3,16 +3,25 @@ package app
 import (
 	"log/slog"
 	"os"
+	"time"
 
-	"github.com/hisshihi/simple-bank/config"
 	"github.com/hisshihi/simple-bank/internal/closer"
+	"github.com/hisshihi/simple-bank/internal/config"
 	"github.com/hisshihi/simple-bank/internal/database"
+	accountrepository "github.com/hisshihi/simple-bank/internal/repository/account"
+	accountservice "github.com/hisshihi/simple-bank/internal/service/account"
 )
 
 type DiContainer struct {
 	config *config.Config
 
 	db *database.DB
+
+	// repo
+	accountRepo *accountrepository.Repo
+
+	//	service
+	accountService *accountservice.Service
 }
 
 func NewDIContainer(config *config.Config) *DiContainer {
@@ -35,4 +44,18 @@ func (c *DiContainer) DB() *database.DB {
 		c.db = db
 	}
 	return c.db
+}
+
+func (c *DiContainer) AccountRepo() *accountrepository.Repo {
+	if c.accountRepo == nil {
+		c.accountRepo = accountrepository.New(c.DB())
+	}
+	return c.accountRepo
+}
+
+func (c *DiContainer) AccountService() *accountservice.Service {
+	if c.accountService == nil {
+		c.accountService = accountservice.New(c.AccountRepo(), func() time.Time { return time.Now().UTC() })
+	}
+	return c.accountService
 }

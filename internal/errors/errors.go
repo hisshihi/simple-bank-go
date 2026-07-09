@@ -10,6 +10,7 @@ var (
 	ErrCurrencyMismatch       = errors.New("currency mismatch")
 	ErrInsufficientFunds      = errors.New("insufficient funds")
 	ErrAccountNotFound        = errors.New("account not found")
+	ErrGenerateUUID           = errors.New("failed to generate uuid")
 )
 
 var (

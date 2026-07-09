@@ -1,0 +1,14 @@
+dir: "{{.InterfaceDir}}/mocks"
+filename: "mock_{{.InterfaceName}}.go"
+pkgname: "mocks"
+structname: "Mock{{.InterfaceName}}"
+template: testify
+log-level: info
+
+packages:
+  github.com/hisshihi/simple-bank/internal/repository/account:
+    config:
+      all: true
+  github.com/hisshihi/simple-bank/internal/service/account:
+    config:
+      all: true
