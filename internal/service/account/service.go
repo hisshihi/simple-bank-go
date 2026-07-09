@@ -30,6 +30,7 @@ func (s *Service) Create(ctx context.Context, name, currency string) (dto.Create
 
 	id, err := uuid.NewV7()
 	if err != nil {
+		log.Error("failed to generate uuid", "error", err)
 		return dto.CreateRecord{}, errs.ErrGenerateUUID
 	}
 
@@ -52,5 +53,15 @@ func (s *Service) Create(ctx context.Context, name, currency string) (dto.Create
 
 	log.Info("record_create", "record", record)
 
+	return record, nil
+}
+
+func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (dto.GetRecord, error) {
+	account, err := s.accountRepo.GetByID(ctx, id)
+	if err != nil {
+		return dto.GetRecord{}, err
+	}
+
+	record := dto.RestoreGetRecord(account.ID(), account.Owner(), string(account.Currency()), string(account.Status()), account.CreatedAt().Format("02.01.2006 15:01"), account.Balance().Amount())
 	return record, nil
 }
