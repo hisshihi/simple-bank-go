@@ -7,8 +7,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hisshihi/simple-bank/config"
 	"github.com/hisshihi/simple-bank/internal/closer"
+	"github.com/hisshihi/simple-bank/internal/config"
 )
 
 type App struct {

@@ -4,8 +4,8 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/hisshihi/simple-bank/config"
 	"github.com/hisshihi/simple-bank/internal/app"
+	"github.com/hisshihi/simple-bank/internal/config"
 	"github.com/hisshihi/simple-bank/internal/logger"
 	"github.com/joho/godotenv"
 )
