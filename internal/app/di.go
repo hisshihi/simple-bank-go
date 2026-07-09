@@ -8,6 +8,7 @@ import (
 	"github.com/hisshihi/simple-bank/internal/closer"
 	"github.com/hisshihi/simple-bank/internal/config"
 	"github.com/hisshihi/simple-bank/internal/database"
+	accounthandler "github.com/hisshihi/simple-bank/internal/handler/account"
 	accountrepository "github.com/hisshihi/simple-bank/internal/repository/account"
 	accountservice "github.com/hisshihi/simple-bank/internal/service/account"
 )
@@ -22,6 +23,9 @@ type DiContainer struct {
 
 	//	service
 	accountService *accountservice.Service
+
+	//	handler
+	accountHandler *accounthandler.Handler
 }
 
 func NewDIContainer(config *config.Config) *DiContainer {
@@ -58,4 +62,11 @@ func (c *DiContainer) AccountService() *accountservice.Service {
 		c.accountService = accountservice.New(c.AccountRepo(), func() time.Time { return time.Now().UTC() })
 	}
 	return c.accountService
+}
+
+func (c *DiContainer) AccountHandler() *accounthandler.Handler {
+	if c.accountHandler == nil {
+		c.accountHandler = accounthandler.NewHandler(c.AccountService())
+	}
+	return c.accountHandler
 }

@@ -16,6 +16,8 @@ type Config struct {
 	//	Logger
 	LoggerLevel  string `env:"LOGGER_LEVEL"`
 	LoggerPretty bool   `env:"LOGGER_PRETTY"`
+
+	HTTPAddr string `env:"HTTP_ADDR"`
 }
 
 func (c Config) DSN() string {
