@@ -14,6 +14,7 @@ type Clock func() time.Time
 const (
 	AccountStatusActive  AccountStatus = "active"
 	AccountStatusBlocked AccountStatus = "blocked"
+	AccountStatusDeleted AccountStatus = "deleted"
 )
 
 type Account struct {

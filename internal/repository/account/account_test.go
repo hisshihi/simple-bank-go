@@ -122,6 +122,65 @@ func TestRepo_GetByID(t *testing.T) {
 
 		_, err = repo.GetByID(ctxWithCancel, account.ID())
 		require.Error(t, err)
-
 	})
+}
+
+func TestRepo_Delete(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tx := helper.NewTx(t)
+		repo := New(tx)
+
+		account := CreateAccount(t, tx)
+
+		err := repo.Delete(t.Context(), account.ID())
+		require.NoError(t, err)
+
+		findAccount, err := repo.GetByID(t.Context(), account.ID())
+		require.ErrorIs(t, err, errs.ErrAccountNotFound)
+		require.Nil(t, findAccount)
+	})
+	t.Run("db error", func(t *testing.T) {
+		tx := helper.NewTx(t)
+		repo := New(tx)
+		ctxWithCancel, cancel := context.WithCancel(t.Context())
+		cancel()
+		err := repo.Delete(ctxWithCancel, uuid.New())
+		require.Error(t, err)
+	})
+}
+
+func TestRepo_UpdateBalance(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tx := helper.NewTx(t)
+		repo := New(tx)
+
+		account := CreateAccount(t, tx)
+
+		newBalance := account.Balance().Amount() + 10
+
+		err := repo.UpdateBalance(t.Context(), account.ID(), newBalance)
+		require.NoError(t, err)
+
+		findAccount, err := repo.GetByID(t.Context(), account.ID())
+		require.NoError(t, err)
+		require.Equal(t, newBalance, findAccount.Balance().Amount())
+	})
+}
+
+func CreateAccount(t *testing.T, tx DB) domain.Account {
+	t.Helper()
+	repo := New(tx)
+
+	newCurrency, err := domain.NewCurrency("RUB")
+	require.NoError(t, err)
+
+	id, err := uuid.NewV7()
+	require.NoError(t, err)
+	newAccount, err := domain.NewAccount(id, "hiss", newCurrency, fixedClock)
+	require.NoError(t, err)
+
+	account, err := repo.Create(context.Background(), newAccount)
+	require.NoError(t, err)
+
+	return *account
 }

@@ -49,7 +49,7 @@ func (r *Repo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Account, erro
 	err := r.db.QueryRow(ctx, `
 	SELECT id, owner, currency, balance, created_at, status
 	FROM accounts
-	WHERE id = $1
+	WHERE id = $1 AND deleted_at IS NULL
 `, id).Scan(&record.AccountID, &record.Owner, &record.Currency, &record.Balance, &record.CreatedAt, &record.Status)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -59,4 +59,37 @@ func (r *Repo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Account, erro
 	}
 
 	return record.ToDomain()
+}
+
+func (r *Repo) UpdateBalance(ctx context.Context, id uuid.UUID, balance int64) error {
+	rowsUpdated, err := r.db.Exec(ctx, `
+	UPDATE accounts
+	SET balance = $2
+	WHERE id = $1 AND deleted_at IS NULL
+`, id, balance)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return errs.ErrAccountNotFound
+		}
+		return err
+	}
+
+	if rowsUpdated.RowsAffected() == 0 {
+		return errs.ErrAccountNotFound
+	}
+
+	return nil
+}
+
+func (r *Repo) Delete(ctx context.Context, id uuid.UUID) error {
+	tag, err := r.db.Exec(ctx, `UPDATE accounts SET status = $2, deleted_at = now() WHERE id = $1 AND status != $2`, id, domain.AccountStatusDeleted)
+	if err != nil {
+		return err
+	}
+
+	if tag.RowsAffected() == 0 {
+		return errs.ErrAccountNotFound
+	}
+
+	return nil
 }
