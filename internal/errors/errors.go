@@ -11,6 +11,9 @@ var (
 	ErrInsufficientFunds      = errors.New("insufficient funds")
 	ErrAccountNotFound        = errors.New("account not found")
 	ErrGenerateUUID           = errors.New("failed to generate uuid")
+	ErrAccountNotActive       = errors.New("account not active")
+	ErrZeroAmount             = errors.New("zero amount")
+	ErrSameAccountTransfer    = errors.New("same account transfer")
 )
 
 var (

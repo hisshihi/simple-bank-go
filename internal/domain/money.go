@@ -42,7 +42,7 @@ func (m Money) Equals(other Money) bool {
 	return m.amount == other.amount && m.currency == other.currency
 }
 func (m Money) IsZero() bool {
-	return m.amount == 0
+	return m.amount <= 0
 }
 func (m Money) Amount() int64 {
 	return m.amount

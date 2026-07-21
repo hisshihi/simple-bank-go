@@ -18,12 +18,12 @@ const (
 )
 
 type Account struct {
-	id        uuid.UUID     `db:"id"`
-	owner     string        `db:"owner"`
-	balance   Money         `db:"balance"`
-	currency  Currency      `db:"currency"`
-	createdAt time.Time     `db:"created_at"`
-	status    AccountStatus `db:"status"`
+	id        uuid.UUID
+	owner     string
+	balance   Money
+	currency  Currency
+	createdAt time.Time
+	status    AccountStatus
 }
 
 func NewAccount(id uuid.UUID, owner string, currency Currency, clock Clock) (*Account, error) {
@@ -80,4 +80,36 @@ func (a *Account) CreatedAt() time.Time {
 }
 func (a *Account) Status() AccountStatus {
 	return a.status
+}
+
+// Withdraw - снимает сумму с баланса
+func (a *Account) Withdraw(amount Money) error {
+	if a.Status() != AccountStatusActive {
+		return errs.ErrAccountNotActive
+	}
+	if a.Balance().IsZero() || amount.IsZero() {
+		return errs.ErrBalanceIsLessThanZero
+	}
+	newBalance, err := a.Balance().Subtrack(amount)
+	if err != nil {
+		return err
+	}
+	a.balance = newBalance
+	return nil
+}
+
+// Deposit - начисляет сумму на баланс
+func (a *Account) Deposit(amount Money) error {
+	if a.Status() != AccountStatusActive {
+		return errs.ErrAccountNotActive
+	}
+	if amount.IsZero() {
+		return errs.ErrZeroAmount
+	}
+	newBalance, err := a.balance.Add(amount)
+	if err != nil {
+		return err
+	}
+	a.balance = newBalance
+	return nil
 }

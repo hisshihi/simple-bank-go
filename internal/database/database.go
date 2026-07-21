@@ -67,6 +67,10 @@ func (d *DB) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandT
 	return d.pool.Exec(ctx, sql, args...)
 }
 
+func (d *DB) SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults {
+	return d.pool.SendBatch(ctx, b)
+}
+
 func (d *DB) Close(_ context.Context) error {
 	d.pool.Close()
 	return nil
