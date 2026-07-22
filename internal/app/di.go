@@ -10,7 +10,6 @@ import (
 	"github.com/hisshihi/simple-bank/internal/database"
 	accounthandler "github.com/hisshihi/simple-bank/internal/handler/account"
 	accountrepository "github.com/hisshihi/simple-bank/internal/repository/account"
-	entryrepository "github.com/hisshihi/simple-bank/internal/repository/entry"
 	transferrepository "github.com/hisshihi/simple-bank/internal/repository/transfer"
 	accountservice "github.com/hisshihi/simple-bank/internal/service/account"
 )
@@ -23,7 +22,6 @@ type DiContainer struct {
 	// repo
 	accountRepo  *accountrepository.Repo
 	transferRepo *transferrepository.Repo
-	entryRepo    *entryrepository.Repo
 
 	//	service
 	accountService *accountservice.Service
@@ -66,13 +64,6 @@ func (c *DiContainer) TransferRepo() *transferrepository.Repo {
 		c.transferRepo = transferrepository.New(c.DB())
 	}
 	return c.transferRepo
-}
-
-func (c *DiContainer) EntryRepo() *entryrepository.Repo {
-	if c.entryRepo == nil {
-		c.entryRepo = entryrepository.New(c.DB())
-	}
-	return c.entryRepo
 }
 
 func (c *DiContainer) AccountService() *accountservice.Service {
