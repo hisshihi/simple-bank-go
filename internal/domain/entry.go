@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
 
@@ -25,7 +26,7 @@ type Entry struct {
 	createdAt  time.Time
 }
 
-func newEntry(id uuid.UUID, accountID, transferID uuid.UUID, amount Money, direction EntryDirection, createdAt Clock) (Entry, error) {
+func newEntry(id, accountID, transferID uuid.UUID, amount Money, direction EntryDirection, createdAt Clock) (Entry, error) {
 	if id == uuid.Nil {
 		return Entry{}, errs.ErrInvalidEntryID
 	}
@@ -68,18 +69,23 @@ func RestoreEntry(id, accountID, transferID uuid.UUID, amount Money, direction E
 func (e Entry) ID() uuid.UUID {
 	return e.id
 }
+
 func (e Entry) AccountID() uuid.UUID {
 	return e.accountID
 }
+
 func (e Entry) TransferID() uuid.UUID {
 	return e.transferID
 }
+
 func (e Entry) Amount() Money {
 	return e.amount
 }
+
 func (e Entry) Direction() EntryDirection {
 	return e.direction
 }
+
 func (e Entry) CreatedAt() time.Time {
 	return e.createdAt
 }

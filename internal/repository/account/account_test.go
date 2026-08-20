@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/hisshihi/simple-bank/internal/domain"
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/hisshihi/simple-bank/internal/helper"
-	"github.com/stretchr/testify/require"
+	"github.com/hisshihi/simple-bank/internal/repository"
 )
 
 func TestMain(m *testing.M) {
@@ -167,7 +169,7 @@ func TestRepo_UpdateBalance(t *testing.T) {
 	})
 }
 
-func CreateAccount(t *testing.T, tx DB) domain.Account {
+func CreateAccount(t *testing.T, tx repository.Querier) domain.Account {
 	t.Helper()
 	repo := New(tx)
 

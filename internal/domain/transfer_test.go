@@ -5,8 +5,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/stretchr/testify/require"
+
+	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
 
 func TestNewTransfer(t *testing.T) {

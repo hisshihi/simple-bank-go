@@ -8,8 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/stretchr/testify/require"
+
+	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
 
 func TestRespondError(t *testing.T) {

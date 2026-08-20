@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/hisshihi/simple-bank/internal/domain"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repo interface {
@@ -19,12 +19,17 @@ type EntryRepo interface {
 }
 
 type AccountRepo interface {
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Account, error)
+	GetByIDForUpdate(ctx context.Context, id uuid.UUID) (*domain.Account, error)
 	UpdateBalance(ctx context.Context, id uuid.UUID, balance int64) error
+	Save(ctx context.Context, a *domain.Account) error
+}
+
+type txManager interface {
+	Do(ctx context.Context, fn func(ctx context.Context) error) error
 }
 
 type Service struct {
-	pool        *pgxpool.Pool
+	txm         txManager
 	repo        Repo
 	entryRepo   EntryRepo
 	clock       func() time.Time
@@ -32,14 +37,14 @@ type Service struct {
 }
 
 func NewService(
-	pool *pgxpool.Pool,
+	txm txManager,
 	repo Repo,
 	entryRepo EntryRepo,
 	clock func() time.Time,
 	accountRepo AccountRepo,
 ) *Service {
 	return &Service{
-		pool:        pool,
+		txm:         txm,
 		repo:        repo,
 		entryRepo:   entryRepo,
 		clock:       clock,
@@ -57,77 +62,50 @@ func (s *Service) Create(ctx context.Context, fromID, toID uuid.UUID, amount int
 		return err
 	}
 
-	from, err := s.getAccountID(ctx, fromID)
+	transferID, err := newUUID()
 	if err != nil {
-		return err
-	}
-	to, err := s.getAccountID(ctx, toID)
-	if err != nil {
-		return err
+		return fmt.Errorf("create transfer id: %w", err)
 	}
 
-	transferID, transferIDErr := newUUID()
-	if transferIDErr != nil {
-		return fmt.Errorf("create transfer id: %w", transferIDErr)
-	}
-
-	//	1. открываем транзакцию
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("begin tx: %w", err)
-	}
-
-	err = from.Withdraw(money)
-	if err != nil {
-		return err
-	}
-
-	err = to.Deposit(money)
-	if err != nil {
-		return err
-	}
-
-	transfer, err := domain.NewTransfer(transferID, fromID, toID, money, s.clock)
-	if err != nil {
-		return fmt.Errorf("create transfer: %w", err)
-	}
-
-	err = s.accountRepo.UpdateBalance(ctx, fromID, amount)
-	if err != nil {
-		return fmt.Errorf("update from account balance: %w", err)
-	}
-
-	err = s.accountRepo.UpdateBalance(ctx, toID, amount)
-	if err != nil {
-		return fmt.Errorf("update to account balance: %w", err)
-	}
-
-	createTransferErr := s.repo.Create(ctx, transfer)
-	if createTransferErr != nil {
-		return fmt.Errorf("create transfer: %w", createTransferErr)
-	}
-
-	for _, entry := range transfer.Entries() {
-		if err = s.entryRepo.Create(ctx, &entry); err != nil {
-			return fmt.Errorf("create entry: %w", err)
+	return s.txm.Do(ctx, func(ctx context.Context) error {
+		from, fromErr := s.accountRepo.GetByIDForUpdate(ctx, fromID)
+		if fromErr != nil {
+			return fromErr
 		}
-	}
+		to, toErr := s.accountRepo.GetByIDForUpdate(ctx, toID)
+		if toErr != nil {
+			return toErr
+		}
 
-	// 2. rollback по умолчанию после Commit это no-op
-	defer func() {
-		_ = tx.Rollback(ctx)
-	}()
+		if err = from.Withdraw(money); err != nil {
+			return err
+		}
+		if err = to.Deposit(money); err != nil {
+			return err
+		}
 
-	err = tx.Commit(ctx)
-	if err != nil {
-		return fmt.Errorf("commit tx: %w", err)
-	}
+		transfer, transferErr := domain.NewTransfer(transferID, fromID, toID, money, s.clock)
+		if transferErr != nil {
+			return fmt.Errorf("create transfer: %w", transferErr)
+		}
 
-	return nil
-}
-
-func (s *Service) getAccountID(ctx context.Context, id uuid.UUID) (*domain.Account, error) {
-	return s.accountRepo.GetByID(ctx, id)
+		// сохраняем посчитанный баланс
+		if err = s.accountRepo.Save(ctx, from); err != nil {
+			return fmt.Errorf("save from: %w", err)
+		}
+		if err = s.accountRepo.Save(ctx, to); err != nil {
+			return fmt.Errorf("save to: %w", err)
+		}
+		if err = s.repo.Create(ctx, transfer); err != nil {
+			return fmt.Errorf("create transfer: %w", err)
+		}
+		for _, entry := range transfer.Entries() {
+			if err = s.entryRepo.Create(ctx, &entry); err != nil {
+				return fmt.Errorf("create entry: %w", err)
+			}
+		}
+		return nil
+	})
 }
 
 func newUUID() (uuid.UUID, error) {

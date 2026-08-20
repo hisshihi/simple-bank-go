@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 )
@@ -54,8 +55,8 @@ func (c *closer) closeAll(ctx context.Context) error {
 		var errs []error
 
 		// Идём от конца к началу - LIFO, как defer.
-		for i := len(funcs) - 1; i >= 0; i-- {
-			f := funcs[i]
+		for _, v := range slices.Backward(funcs) {
+			f := v
 
 			// Бюджет времени исчерпан — пропускаем оставшиеся ресурсы.
 			select {

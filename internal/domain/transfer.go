@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
 
@@ -80,12 +81,15 @@ func RestoreTransfer(id, fromAccountID, toAccountID uuid.UUID, amount Money, ent
 func (t *Transfer) ID() uuid.UUID {
 	return t.id
 }
+
 func (t *Transfer) FromAccountID() uuid.UUID {
 	return t.fromAccountID
 }
+
 func (t *Transfer) ToAccountID() uuid.UUID {
 	return t.toAccountID
 }
+
 func (t *Transfer) Amount() Money {
 	return t.amount
 }
@@ -96,6 +100,7 @@ func (t *Transfer) Entries() []Entry {
 	copy(out, t.entries)
 	return out
 }
+
 func (t *Transfer) CreatedAt() time.Time {
 	return t.createdAt
 }

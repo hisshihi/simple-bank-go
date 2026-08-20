@@ -4,10 +4,11 @@ import (
 	"log"
 	"log/slog"
 
+	"github.com/joho/godotenv"
+
 	"github.com/hisshihi/simple-bank/internal/app"
 	"github.com/hisshihi/simple-bank/internal/config"
 	"github.com/hisshihi/simple-bank/internal/logger"
-	"github.com/joho/godotenv"
 )
 
 func main() {

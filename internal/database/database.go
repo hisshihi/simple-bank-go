@@ -75,3 +75,7 @@ func (d *DB) Close(_ context.Context) error {
 	d.pool.Close()
 	return nil
 }
+
+func (d *DB) Pool() *pgxpool.Pool {
+	return d.pool
+}

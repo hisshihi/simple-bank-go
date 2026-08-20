@@ -16,9 +16,7 @@ var (
 	ErrSameAccountTransfer    = errors.New("same account transfer")
 )
 
-var (
-	ErrInvalidEntryID = errors.New("invalid entry id")
-)
+var ErrInvalidEntryID = errors.New("invalid entry id")
 
 var (
 	ErrInvalidTransferID    = errors.New("invalid transfer id")

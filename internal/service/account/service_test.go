@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/hisshihi/simple-bank/internal/domain"
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/hisshihi/simple-bank/internal/service/account/mocks"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestService_Create(t *testing.T) {

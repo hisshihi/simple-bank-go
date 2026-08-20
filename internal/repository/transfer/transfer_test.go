@@ -1,15 +1,17 @@
 package transfer
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/hisshihi/simple-bank/internal/domain"
 	"github.com/hisshihi/simple-bank/internal/helper"
 	"github.com/hisshihi/simple-bank/internal/repository/account"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -21,7 +23,6 @@ func TestRepo_Create(t *testing.T) {
 	repo := New(tx)
 	accountRepo := account.New(tx)
 	t.Run("success", func(t *testing.T) {
-
 		newCurrency, err := domain.NewCurrency("RUB")
 		require.NoError(t, err)
 
@@ -41,6 +42,29 @@ func TestRepo_Create(t *testing.T) {
 		transfer, err := domain.NewTransfer(NewUUID(t), from.ID(), to.ID(), newMoney, fixedClock)
 		require.NoError(t, err)
 		require.NoError(t, repo.Create(t.Context(), transfer))
+	})
+	t.Run("failure", func(t *testing.T) {
+		newCurrency, err := domain.NewCurrency("RUB")
+		require.NoError(t, err)
+
+		newMoney, err := domain.NewMoney(100, newCurrency)
+		require.NoError(t, err)
+
+		from, err := domain.NewAccount(NewUUID(t), "Denis", newCurrency, fixedClock)
+		require.NoError(t, err)
+		_, err = accountRepo.Create(t.Context(), from)
+		require.NoError(t, err)
+
+		to, err := domain.NewAccount(NewUUID(t), "Arina", newCurrency, fixedClock)
+		require.NoError(t, err)
+		_, err = accountRepo.Create(t.Context(), to)
+		require.NoError(t, err)
+
+		transfer, err := domain.NewTransfer(NewUUID(t), from.ID(), to.ID(), newMoney, fixedClock)
+		require.NoError(t, err)
+		ctxWithCancel, cancel := context.WithCancel(t.Context())
+		cancel()
+		require.Error(t, repo.Create(ctxWithCancel, transfer))
 	})
 }
 

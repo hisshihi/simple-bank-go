@@ -5,7 +5,6 @@ import (
 	"log"
 	"testing"
 
-	"github.com/hisshihi/simple-bank/migrations"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -13,6 +12,8 @@ import (
 	"github.com/testcontainers/testcontainers-go"
 	pgcontainer "github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/hisshihi/simple-bank/migrations"
 )
 
 var testPool *pgxpool.Pool

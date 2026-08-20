@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
 
@@ -66,18 +67,23 @@ func RestoreAccount(
 func (a *Account) ID() uuid.UUID {
 	return a.id
 }
+
 func (a *Account) Owner() string {
 	return a.owner
 }
+
 func (a *Account) Currency() Currency {
 	return a.currency
 }
+
 func (a *Account) Balance() Money {
 	return a.balance
 }
+
 func (a *Account) CreatedAt() time.Time {
 	return a.createdAt
 }
+
 func (a *Account) Status() AccountStatus {
 	return a.status
 }

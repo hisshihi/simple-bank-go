@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/hisshihi/simple-bank/internal/domain"
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/hisshihi/simple-bank/internal/logger"

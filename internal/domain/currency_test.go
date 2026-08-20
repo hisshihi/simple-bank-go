@@ -3,8 +3,9 @@ package domain
 import (
 	"testing"
 
-	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/stretchr/testify/require"
+
+	errs "github.com/hisshihi/simple-bank/internal/errors"
 )
 
 func TestNewCurrency(t *testing.T) {
