@@ -16,7 +16,18 @@ tasks:
       - task: build
       - task: migrate:up
       - task: migrate:down
+      - task: golangci:lint
+      - task: golangci:fix
 
+  golangci:lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run
+
+  golangci:fix:
+    desc: Run fix linter
+    cmds:
+      - golangci-lint run --fix
 
   run:
     desc: Run the application

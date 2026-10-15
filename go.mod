@@ -1,6 +1,6 @@
 module github.com/hisshihi/simple-bank
 
-go 1.26.5
+go 1.27.1
 
 require (
 	github.com/caarlos0/env/v11 v11.4.1
@@ -17,8 +17,6 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2 v2.0.4 // indirect
-	github.com/avito-tech/go-transaction-manager/trm/v2 v2.0.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect

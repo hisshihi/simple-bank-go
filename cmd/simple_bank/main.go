@@ -15,10 +15,10 @@ func main() {
 	_ = godotenv.Load()
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("err to load config: %v", err)
 	}
 	logger.Init(parseLogLevel(cfg.LoggerLevel), cfg.LoggerPretty)
-	err = app.New(&cfg).Run()
+	err = app.New(cfg).Run()
 	if err != nil {
 		log.Fatal(err)
 	}

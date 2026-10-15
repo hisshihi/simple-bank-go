@@ -1,4 +1,4 @@
-# ..golangci.yml — конфиг для golangci-lint v2 (>= v2.1)
+# .golangci.yml — конфиг для golangci-lint v2 (>= v2.1)
 # Профиль: "умеренно строгий" под стек Go 1.22+ / gRPC / Kafka / PostgreSQL (pgx, GORM) / Redis / Clean Architecture.
 # Подходит и для рабочих сервисов, и для pet-проектов — но под конкретный проект стоит подкрутить
 # TODO-места ниже (gci local prefix, depguard, gochecknoglobals).
@@ -101,7 +101,8 @@ linters:
     cyclop:
       max-complexity: 15
       package-average: 10.0
-      skip-tests: true
+      # skip-tests был в v1, в v2 удалён из схемы — исключение _test.go для cyclop
+      # уже задано ниже через exclusions.rules
 
     funlen:
       lines: 100
@@ -121,14 +122,15 @@ linters:
         - unnamedResult # слишком шумный на простых (T, error)
       settings:
         hugeParam:
-          sizeThreshold: 80
+          sizeThreshold: 128 # DDD value objects (Entry/Money/Config ~100-112 байт) — by-value осознанно, ради иммутабельности
         rangeValCopy:
           sizeThreshold: 512
 
     goconst:
       min-len: 3
       min-occurrences: 3
-      ignore-tests: true
+      # ignore-tests был в v1, в v2 удалён — исключение тестов теперь только через
+      # linters.exclusions.rules (см. ниже)
 
     prealloc:
       simple: true
@@ -216,6 +218,7 @@ linters:
           - cyclop
           - mnd
           - containedctx
+          - goconst # table-driven тесты легитимно повторяют "success"/"error" в разных кейсах
     paths:
       - '.*\.pb\.go$'
       - '.*\.pb\.gw\.go$'

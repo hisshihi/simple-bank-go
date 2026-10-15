@@ -13,14 +13,16 @@ import (
 	"github.com/hisshihi/simple-bank/internal/config"
 )
 
+const readHeaderTimeout = 5 * time.Second
+
 type App struct {
 	diContainer *DiContainer
 	httpServer  *http.Server
 }
 
-func New(config *config.Config) *App {
+func New(cfg *config.Config) *App {
 	a := &App{
-		diContainer: NewDIContainer(config),
+		diContainer: NewDIContainer(cfg),
 	}
 
 	a.initDeps()
@@ -42,8 +44,9 @@ func (a *App) initHTTPServer() {
 	a.diContainer.AccountHandler().RegisterRouters(mux)
 
 	a.httpServer = &http.Server{
-		Addr:    a.diContainer.config.HTTPAddr,
-		Handler: mux,
+		Addr:              a.diContainer.config.HTTPAddr,
+		Handler:           mux,
+		ReadHeaderTimeout: readHeaderTimeout,
 	}
 }
 

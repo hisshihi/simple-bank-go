@@ -27,7 +27,7 @@ func (c Config) DSN() string {
 	)
 }
 
-func Load() (Config, error) {
+func Load() (*Config, error) {
 	var cfg Config
-	return cfg, env.Parse(&cfg)
+	return &cfg, env.Parse(&cfg)
 }
