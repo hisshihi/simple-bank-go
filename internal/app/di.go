@@ -5,13 +5,14 @@ import (
 	"os"
 	"time"
 
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
+
 	"github.com/hisshihi/simple-bank/internal/closer"
 	"github.com/hisshihi/simple-bank/internal/config"
 	"github.com/hisshihi/simple-bank/internal/database"
 	accounthandler "github.com/hisshihi/simple-bank/internal/handler/account"
-	"github.com/hisshihi/simple-bank/internal/repository"
 	accountrepository "github.com/hisshihi/simple-bank/internal/repository/account"
-	"github.com/hisshihi/simple-bank/internal/repository/entry"
 	entryrepository "github.com/hisshihi/simple-bank/internal/repository/entry"
 	transferrepository "github.com/hisshihi/simple-bank/internal/repository/transfer"
 	accountservice "github.com/hisshihi/simple-bank/internal/service/account"
@@ -36,7 +37,7 @@ type DiContainer struct {
 	accountHandler *accounthandler.Handler
 
 	// other
-	txManager *repository.TxManager
+	txManager *manager.Manager
 }
 
 func NewDIContainer(config *config.Config) *DiContainer {
@@ -63,21 +64,21 @@ func (c *DiContainer) DB() *database.DB {
 
 func (c *DiContainer) AccountRepo() *accountrepository.Repo {
 	if c.accountRepo == nil {
-		c.accountRepo = accountrepository.New(c.DB())
+		c.accountRepo = accountrepository.New(c.DB(), trmpgx.DefaultCtxGetter)
 	}
 	return c.accountRepo
 }
 
 func (c *DiContainer) TransferRepo() *transferrepository.Repo {
 	if c.transferRepo == nil {
-		c.transferRepo = transferrepository.New(c.DB())
+		c.transferRepo = transferrepository.New(c.DB(), trmpgx.DefaultCtxGetter)
 	}
 	return c.transferRepo
 }
 
-func (c *DiContainer) EntryRepo() *entry.Repo {
+func (c *DiContainer) EntryRepo() *entryrepository.Repo {
 	if c.entryRepo == nil {
-		c.entryRepo = entry.New(c.DB().Pool())
+		c.entryRepo = entryrepository.New(c.DB(), trmpgx.DefaultCtxGetter)
 	}
 	return c.entryRepo
 }
@@ -103,9 +104,9 @@ func (c *DiContainer) TransferService() *transferservice.Service {
 	return c.transferService
 }
 
-func (c *DiContainer) TxManager() *repository.TxManager {
+func (c *DiContainer) TxManager() *manager.Manager {
 	if c.txManager == nil {
-		c.txManager = repository.NewTxManager(c.DB().Pool())
+		c.txManager = manager.Must(trmpgx.NewDefaultFactory(c.DB().Pool()))
 	}
 	return c.txManager
 }

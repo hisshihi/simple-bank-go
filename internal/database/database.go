@@ -15,6 +15,14 @@ type DB struct {
 	pool *pgxpool.Pool
 }
 
+func (d *DB) Begin(ctx context.Context) (pgx.Tx, error) {
+	return d.pool.Begin(ctx)
+}
+
+func (d *DB) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames []string, rowSrc pgx.CopyFromSource) (int64, error) {
+	return d.pool.CopyFrom(ctx, tableName, columnNames, rowSrc)
+}
+
 func New(dsn string) (*DB, error) {
 	if dsn == "" {
 		return nil, fmt.Errorf("dsn is empty")

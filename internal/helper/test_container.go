@@ -89,3 +89,11 @@ func NewTx(t *testing.T) pgx.Tx {
 
 	return tx
 }
+
+type TxAdapt struct {
+	tx pgx.Tx
+}
+
+func (a *TxAdapt) BeginTx(ctx context.Context, txOptions pgx.TxOptions) (pgx.Tx, error) {
+	return a.tx.Begin(ctx)
+}

@@ -10,6 +10,10 @@ import (
 
 type AccountStatus string
 
+func (s AccountStatus) String() string {
+	return string(s)
+}
+
 type Clock func() time.Time
 
 const (

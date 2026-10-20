@@ -4,6 +4,7 @@ vars:
   BIN: ./bin/app
   BIN_DIR: '{{.ROOT_DIR}}/bin'
   GOOSE: '{{.BIN_DIR}}/goose'
+  PB_DIR: internal/api/pb
 
 tasks:
   default:
@@ -13,11 +14,18 @@ tasks:
       - task: fmt
       - task: lint
       - task: test
+      - task: test:mini
       - task: build
       - task: migrate:up
       - task: migrate:down
+      - task: goose:status
       - task: golangci:lint
       - task: golangci:fix
+      - task: golangci:lint:last
+      - task: golangci:fix:last
+      - task: proto
+      - task: proto:lint
+      - task: proto:breaking
 
   golangci:lint:
     desc: Run linter
@@ -28,6 +36,16 @@ tasks:
     desc: Run fix linter
     cmds:
       - golangci-lint run --fix
+
+  golangci:lint:last:
+    desc: Запуск линтера относительно последнего комита
+    cmds:
+      - golangci-lint run --new-from-rev=HEAD~1
+
+  golangci:fix:last:
+    desc: Запуск фикса линтера относительно последнего комита
+    cmds:
+      - golangci-lint run --fix --new-from-rev=HEAD~1
 
   run:
     desc: Run the application
@@ -62,6 +80,11 @@ tasks:
     cmds:
       - go test -race -v -cover -count=100 ./...
 
+  test:mini:
+    desc: Run tests with race detector
+    cmds:
+      - go test -race -v -cover -count=1 ./...
+
   lint:
     desc: Run golangci-lint
     cmds:
@@ -81,15 +104,25 @@ tasks:
   proto:
     desc: Generate protobuf and gRPC code
     sources:
-      - proto/*.proto
+      - internal/api/proto/**/*.proto
+      - buf.yaml
+      - buf.gen.yaml
     generates:
-      - pb/*.go
+      - "{{.PB_DIR}}/**/*.go"
     cmds:
-      - rm -rf pb/*
-      - |
-        protoc --proto_path=proto --go_out=pb --go-opt=paths=source_relative \
-            --go-grpc_out=pb --go-grpc_opt=paths=source_relative \
-            proto/*.proto
+      - rm -rf {{.PB_DIR}}
+      - mkdir -p {{.PB_DIR}}
+      - buf generate
+
+  proto:lint:
+    desc: Lint proto files
+    cmds:
+      - buf lint
+
+  proto:breaking:
+    desc: Check for breaking changes against main
+    cmds:
+      - buf breaking --against '.git#branch=main'
 
   evans:
     desc: Start Evans REPL

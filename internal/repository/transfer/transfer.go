@@ -4,29 +4,23 @@ import (
 	"context"
 	"fmt"
 
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/hisshihi/simple-bank/internal/domain"
-	"github.com/hisshihi/simple-bank/internal/repository"
 )
 
 type Repo struct {
-	pool repository.Querier
+	db     trmpgx.Tr
+	getter *trmpgx.CtxGetter
 }
 
-func (r *Repo) db(ctx context.Context) repository.Querier {
-	if tx := repository.ExtractTx(ctx); tx != nil {
-		return tx
-	}
-	return r.pool
-}
-
-func New(db repository.Querier) *Repo {
-	return &Repo{pool: db}
+func New(db trmpgx.Tr, getter *trmpgx.CtxGetter) *Repo {
+	return &Repo{db: db, getter: getter}
 }
 
 func (r *Repo) Create(ctx context.Context, transfer *domain.Transfer) error {
-	_, err := r.db(ctx).Exec(ctx, `
+	_, err := r.getter.DefaultTrOrDB(ctx, r.db).Exec(ctx, `
 	INSERT INTO transfers (id, from_account_id, to_account_id, amount, currency, created_at)
 	VALUES ($1, $2, $3, $4, $5, $6)
 `,
@@ -58,7 +52,7 @@ func (r *Repo) Create(ctx context.Context, transfer *domain.Transfer) error {
 		)
 	}
 
-	br := r.db(ctx).SendBatch(ctx, batch)
+	br := r.getter.DefaultTrOrDB(ctx, r.db).SendBatch(ctx, batch)
 	defer br.Close()
 
 	for range transfer.Entries() {

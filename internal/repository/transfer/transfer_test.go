@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
@@ -20,8 +21,8 @@ func TestMain(m *testing.M) {
 
 func TestRepo_Create(t *testing.T) {
 	tx := helper.NewTx(t)
-	repo := New(tx)
-	accountRepo := account.New(tx)
+	repo := New(tx, trmpgx.DefaultCtxGetter)
+	accountRepo := account.New(tx, trmpgx.DefaultCtxGetter)
 	t.Run("success", func(t *testing.T) {
 		newCurrency, err := domain.NewCurrency("RUB")
 		require.NoError(t, err)

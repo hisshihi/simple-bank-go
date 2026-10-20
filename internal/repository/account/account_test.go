@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/hisshihi/simple-bank/internal/domain"
 	errs "github.com/hisshihi/simple-bank/internal/errors"
 	"github.com/hisshihi/simple-bank/internal/helper"
-	"github.com/hisshihi/simple-bank/internal/repository"
 )
 
 func TestMain(m *testing.M) {
@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 func TestRepo_Create(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 
 		newCurrency, err := domain.NewCurrency("RUB")
 		require.NoError(t, err)
@@ -45,7 +45,7 @@ func TestRepo_Create(t *testing.T) {
 	})
 	t.Run("create error", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 
 		newCurrency, err := domain.NewCurrency("RUB")
 		require.NoError(t, err)
@@ -71,7 +71,7 @@ var fixedClock = func() time.Time {
 func TestRepo_GetByID(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 
 		newCurrency, err := domain.NewCurrency("RUB")
 		require.NoError(t, err)
@@ -95,7 +95,7 @@ func TestRepo_GetByID(t *testing.T) {
 	})
 	t.Run("account not found", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 
 		fakeID, err := uuid.NewV7()
 		require.NoError(t, err)
@@ -106,7 +106,7 @@ func TestRepo_GetByID(t *testing.T) {
 	})
 	t.Run("other error", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 
 		newCurrency, err := domain.NewCurrency("RUB")
 		require.NoError(t, err)
@@ -130,7 +130,7 @@ func TestRepo_GetByID(t *testing.T) {
 func TestRepo_Delete(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 
 		account := CreateAccount(t, tx)
 
@@ -143,7 +143,7 @@ func TestRepo_Delete(t *testing.T) {
 	})
 	t.Run("db error", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 		ctxWithCancel, cancel := context.WithCancel(t.Context())
 		cancel()
 		err := repo.Delete(ctxWithCancel, uuid.New())
@@ -154,7 +154,7 @@ func TestRepo_Delete(t *testing.T) {
 func TestRepo_UpdateBalance(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tx := helper.NewTx(t)
-		repo := New(tx)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
 
 		account := CreateAccount(t, tx)
 
@@ -169,9 +169,30 @@ func TestRepo_UpdateBalance(t *testing.T) {
 	})
 }
 
-func CreateAccount(t *testing.T, tx repository.Querier) domain.Account {
+func TestRepo_Save(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		tx := helper.NewTx(t)
+		repo := New(tx, trmpgx.DefaultCtxGetter)
+
+		account := CreateAccount(t, tx)
+
+		amount, err := domain.NewMoney(20, domain.CurrencyTypeRUB)
+		require.NoError(t, err)
+		err = account.Deposit(amount)
+		require.NoError(t, err)
+
+		err = repo.Save(t.Context(), &account)
+		require.NoError(t, err)
+
+		findAccount, err := repo.GetByID(t.Context(), account.ID())
+		require.NoError(t, err)
+		require.Equal(t, amount.Amount(), findAccount.Balance().Amount())
+	})
+}
+
+func CreateAccount(t *testing.T, tx trmpgx.Tr) domain.Account {
 	t.Helper()
-	repo := New(tx)
+	repo := New(tx, trmpgx.DefaultCtxGetter)
 
 	newCurrency, err := domain.NewCurrency("RUB")
 	require.NoError(t, err)

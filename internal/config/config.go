@@ -29,5 +29,8 @@ func (c Config) DSN() string {
 
 func Load() (*Config, error) {
 	var cfg Config
-	return &cfg, env.Parse(&cfg)
+	if err := env.Parse(&cfg); err != nil {
+		return nil, fmt.Errorf("parse env: %w", err)
+	}
+	return &cfg, nil
 }

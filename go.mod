@@ -3,6 +3,8 @@ module github.com/hisshihi/simple-bank
 go 1.27.1
 
 require (
+	github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2 v2.0.5
+	github.com/avito-tech/go-transaction-manager/trm/v2 v2.0.5
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.9.2
