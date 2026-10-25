@@ -102,7 +102,7 @@ func (c *DiContainer) AccountHandler() *accounthandler.Handler {
 
 func (c *DiContainer) TransferService() *transferservice.Service {
 	if c.transferService == nil {
-		c.transferService = transferservice.NewService(c.TxManager(), c.TransferRepo(), c.EntryRepo(), func() time.Time { return time.Now().UTC() }, c.AccountRepo())
+		c.transferService = transferservice.NewService(c.TxManager(), c.TransferRepo(), func() time.Time { return time.Now().UTC() }, c.AccountRepo())
 	}
 	return c.transferService
 }

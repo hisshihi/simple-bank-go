@@ -121,7 +121,7 @@ func TestAccount_Withdraw(t *testing.T) {
 			name:    "balance is zero",
 			status:  AccountStatusActive,
 			balance: Money{amount: 0, currency: rub},
-			wantErr: errs.ErrBalanceIsLessThanZero,
+			wantErr: errs.ErrInsufficientFunds,
 		},
 	}
 	for _, tt := range tests {

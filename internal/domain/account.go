@@ -98,7 +98,7 @@ func (a *Account) Withdraw(amount Money) error {
 		return errs.ErrAccountNotActive
 	}
 	if a.Balance().IsZero() || amount.IsZero() {
-		return errs.ErrBalanceIsLessThanZero
+		return errs.ErrInsufficientFunds
 	}
 	newBalance, err := a.Balance().Subtrack(amount)
 	if err != nil {

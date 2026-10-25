@@ -1,6 +1,7 @@
 package transfer
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -14,13 +15,8 @@ type Repo interface {
 	Create(ctx context.Context, transfer *domain.Transfer) error
 }
 
-type EntryRepo interface {
-	Create(ctx context.Context, entry *domain.Entry) error
-}
-
 type AccountRepo interface {
 	GetByIDForUpdate(ctx context.Context, id uuid.UUID) (*domain.Account, error)
-	UpdateBalance(ctx context.Context, id uuid.UUID, balance int64) error
 	Save(ctx context.Context, a *domain.Account) error
 }
 
@@ -31,7 +27,6 @@ type txManager interface {
 type Service struct {
 	txm         txManager
 	repo        Repo
-	entryRepo   EntryRepo
 	clock       func() time.Time
 	accountRepo AccountRepo
 }
@@ -39,14 +34,12 @@ type Service struct {
 func NewService(
 	txm txManager,
 	repo Repo,
-	entryRepo EntryRepo,
 	clock func() time.Time,
 	accountRepo AccountRepo,
 ) *Service {
 	return &Service{
 		txm:         txm,
 		repo:        repo,
-		entryRepo:   entryRepo,
 		clock:       clock,
 		accountRepo: accountRepo,
 	}
@@ -68,13 +61,9 @@ func (s *Service) Create(ctx context.Context, fromID, toID uuid.UUID, amount int
 	}
 
 	return s.txm.Do(ctx, func(ctx context.Context) error {
-		from, fromErr := s.accountRepo.GetByIDForUpdate(ctx, fromID)
-		if fromErr != nil {
-			return fromErr
-		}
-		to, toErr := s.accountRepo.GetByIDForUpdate(ctx, toID)
-		if toErr != nil {
-			return toErr
+		from, to, lockErr := s.lockPair(ctx, fromID, toID)
+		if lockErr != nil {
+			return lockErr
 		}
 
 		if errWithdraw := from.Withdraw(money); errWithdraw != nil {
@@ -99,13 +88,31 @@ func (s *Service) Create(ctx context.Context, fromID, toID uuid.UUID, amount int
 		if err = s.repo.Create(ctx, transfer); err != nil {
 			return fmt.Errorf("create transfer: %w", err)
 		}
-		for _, entry := range transfer.Entries() {
-			if err = s.entryRepo.Create(ctx, &entry); err != nil {
-				return fmt.Errorf("create entry: %w", err)
-			}
-		}
 		return nil
 	})
+}
+
+// lockPair берёт FOR UPDATE в детерминированном порядке (по возрастанию ID),
+// чтобы встречные переводы A→B и B→A не дедлочили друг друга.
+func (s *Service) lockPair(ctx context.Context, fromID, toID uuid.UUID) (from, to *domain.Account, err error) {
+	firstID, secondID := fromID, toID
+	if bytes.Compare(fromID[:], toID[:]) > 0 {
+		firstID, secondID = toID, fromID
+	}
+
+	first, err := s.accountRepo.GetByIDForUpdate(ctx, firstID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("lock %s: %w", firstID, err)
+	}
+	second, err := s.accountRepo.GetByIDForUpdate(ctx, secondID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("lock %s: %w", secondID, err)
+	}
+
+	if first.ID() == fromID {
+		return first, second, nil
+	}
+	return second, first, nil
 }
 
 func newUUID() (uuid.UUID, error) {

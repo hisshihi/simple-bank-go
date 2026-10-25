@@ -97,9 +97,17 @@ func (r *Repo) UpdateBalance(ctx context.Context, id uuid.UUID, balance int64) e
 }
 
 func (r *Repo) Save(ctx context.Context, a *domain.Account) error {
-	_, err := r.getter.DefaultTrOrDB(ctx, r.db).Exec(ctx, `
-	UPDATE accounts SET balance = $2, status = $3 WHERE id = $1
+	rowsUpdated, err := r.getter.DefaultTrOrDB(ctx, r.db).Exec(ctx, `
+	UPDATE accounts SET balance = $2, status = $3 WHERE id = $1 AND deleted_at IS NULL
 `, a.ID(), a.Balance().Amount(), a.Status().String())
+	if errors.Is(err, pgx.ErrNoRows) {
+		return errs.ErrAccountNotFound
+	}
+
+	if rowsUpdated.RowsAffected() == 0 {
+		return errs.ErrAccountNotFound
+	}
+
 	return err
 }
 

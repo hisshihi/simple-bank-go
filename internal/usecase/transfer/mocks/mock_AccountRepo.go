@@ -18,10 +18,19 @@ func NewMockAccountRepo(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockAccountRepo {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockAccountRepo{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -160,69 +169,6 @@ func (_c *MockAccountRepo_Save_Call) Return(err error) *MockAccountRepo_Save_Cal
 }
 
 func (_c *MockAccountRepo_Save_Call) RunAndReturn(run func(ctx context.Context, a *domain.Account) error) *MockAccountRepo_Save_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateBalance provides a mock function for the type MockAccountRepo
-func (_mock *MockAccountRepo) UpdateBalance(ctx context.Context, id uuid.UUID, balance int64) error {
-	ret := _mock.Called(ctx, id, balance)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateBalance")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, int64) error); ok {
-		r0 = returnFunc(ctx, id, balance)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// MockAccountRepo_UpdateBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBalance'
-type MockAccountRepo_UpdateBalance_Call struct {
-	*mock.Call
-}
-
-// UpdateBalance is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id uuid.UUID
-//   - balance int64
-func (_e *MockAccountRepo_Expecter) UpdateBalance(ctx any, id any, balance any) *MockAccountRepo_UpdateBalance_Call {
-	return &MockAccountRepo_UpdateBalance_Call{Call: _e.mock.On("UpdateBalance", ctx, id, balance)}
-}
-
-func (_c *MockAccountRepo_UpdateBalance_Call) Run(run func(ctx context.Context, id uuid.UUID, balance int64)) *MockAccountRepo_UpdateBalance_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 uuid.UUID
-		if args[1] != nil {
-			arg1 = args[1].(uuid.UUID)
-		}
-		var arg2 int64
-		if args[2] != nil {
-			arg2 = args[2].(int64)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *MockAccountRepo_UpdateBalance_Call) Return(err error) *MockAccountRepo_UpdateBalance_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *MockAccountRepo_UpdateBalance_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID, balance int64) error) *MockAccountRepo_UpdateBalance_Call {
 	_c.Call.Return(run)
 	return _c
 }
