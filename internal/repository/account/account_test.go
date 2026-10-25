@@ -151,24 +151,6 @@ func TestRepo_Delete(t *testing.T) {
 	})
 }
 
-func TestRepo_UpdateBalance(t *testing.T) {
-	t.Run("success", func(t *testing.T) {
-		tx := helper.NewTx(t)
-		repo := New(tx, trmpgx.DefaultCtxGetter)
-
-		account := CreateAccount(t, tx)
-
-		newBalance := account.Balance().Amount() + 10
-
-		err := repo.UpdateBalance(t.Context(), account.ID(), newBalance)
-		require.NoError(t, err)
-
-		findAccount, err := repo.GetByID(t.Context(), account.ID())
-		require.NoError(t, err)
-		require.Equal(t, newBalance, findAccount.Balance().Amount())
-	})
-}
-
 func TestRepo_Save(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		tx := helper.NewTx(t)

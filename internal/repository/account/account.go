@@ -3,6 +3,7 @@ package account
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/google/uuid"
@@ -76,32 +77,12 @@ func (r *Repo) GetByIDForUpdate(ctx context.Context, id uuid.UUID) (*domain.Acco
 	return record.ToDomain()
 }
 
-func (r *Repo) UpdateBalance(ctx context.Context, id uuid.UUID, balance int64) error {
-	rowsUpdated, err := r.getter.DefaultTrOrDB(ctx, r.db).Exec(ctx, `
-	UPDATE accounts
-	SET balance = $2
-	WHERE id = $1 AND deleted_at IS NULL
-`, id, balance)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return errs.ErrAccountNotFound
-		}
-		return err
-	}
-
-	if rowsUpdated.RowsAffected() == 0 {
-		return errs.ErrAccountNotFound
-	}
-
-	return nil
-}
-
 func (r *Repo) Save(ctx context.Context, a *domain.Account) error {
 	rowsUpdated, err := r.getter.DefaultTrOrDB(ctx, r.db).Exec(ctx, `
 	UPDATE accounts SET balance = $2, status = $3 WHERE id = $1 AND deleted_at IS NULL
 `, a.ID(), a.Balance().Amount(), a.Status().String())
-	if errors.Is(err, pgx.ErrNoRows) {
-		return errs.ErrAccountNotFound
+	if err != nil {
+		return fmt.Errorf("save account: %w", err)
 	}
 
 	if rowsUpdated.RowsAffected() == 0 {
