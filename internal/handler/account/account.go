@@ -2,7 +2,6 @@ package account
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -23,7 +22,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) error {
 
 	record, err := h.accountSvc.Create(r.Context(), reqBody.Name, reqBody.Currency)
 	if err != nil {
-		slog.Error("ошибка при создании аккаунта", "name", reqBody.Name, "currency", reqBody.Currency, "error", err)
+		h.log.ErrorContext(r.Context(), "ошибка при создании аккаунта", "name", reqBody.Name, "currency", reqBody.Currency, "err", err)
 		return err
 	}
 

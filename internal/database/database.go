@@ -2,13 +2,20 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const (
+	maxConns        = 10
+	minConns        = 2
+	maxConnLifetime = 10 * time.Minute
+	maxConnIdleTime = 5 * time.Minute
 )
 
 type DB struct {
@@ -25,7 +32,7 @@ func (d *DB) CopyFrom(ctx context.Context, tableName pgx.Identifier, columnNames
 
 func New(dsn string) (*DB, error) {
 	if dsn == "" {
-		return nil, fmt.Errorf("dsn is empty")
+		return nil, errors.New("dsn is empty")
 	}
 
 	config, err := pgxpool.ParseConfig(dsn)
@@ -33,10 +40,10 @@ func New(dsn string) (*DB, error) {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
 
-	config.MaxConns = 10
-	config.MinConns = 2
-	config.MaxConnLifetime = 10 * time.Minute
-	config.MaxConnIdleTime = 5 * time.Minute
+	config.MaxConns = maxConns
+	config.MinConns = minConns
+	config.MaxConnLifetime = maxConnLifetime
+	config.MaxConnIdleTime = maxConnIdleTime
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
@@ -48,7 +55,6 @@ func New(dsn string) (*DB, error) {
 		return nil, fmt.Errorf("ping pool: %w", err)
 	}
 
-	slog.Info("database connection established")
 	return &DB{pool: pool}, nil
 }
 

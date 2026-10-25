@@ -8,15 +8,15 @@ import (
 
 type contextKey struct{}
 
-func Init(level slog.Level, pretty bool) {
+func Init(level slog.Level, pretty bool) *slog.Logger {
 	var handler slog.Handler
 	opts := &slog.HandlerOptions{Level: level, AddSource: true}
 	if pretty {
-		handler = slog.NewTextHandler(os.Stderr, opts)
+		handler = slog.NewTextHandler(os.Stdout, opts)
 	} else {
-		handler = slog.NewJSONHandler(os.Stderr, opts)
+		handler = slog.NewJSONHandler(os.Stdout, opts)
 	}
-	slog.SetDefault(slog.New(handler))
+	return slog.New(handler)
 }
 
 // WithContext кладёт логгер в контекст.

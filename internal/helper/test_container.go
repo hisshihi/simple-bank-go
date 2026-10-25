@@ -33,23 +33,27 @@ func TestSetupPool(m *testing.M) (code int) {
 	}
 	defer func() {
 		if err = container.Terminate(ctx); err != nil {
-			log.Fatalf("ошибка при остановке контейнера: %v", err)
+			log.Printf("ошибка при остановке контейнера: %v", err)
+			return
 		}
 	}()
 
 	connStr, err := container.ConnectionString(ctx, "sslmode=disable")
 	if err != nil {
-		log.Fatalf("не удалось получить подключение: %v", err)
+		log.Printf("не удалось получить подключение: %v", err)
+		return 1
 	}
 
 	testPool, err = pgxpool.New(ctx, connStr)
 	if err != nil {
-		log.Fatalf("не удалось создать пул: %v", err)
+		log.Printf("не удалось создать пул: %v", err)
+		return 1
 	}
 	defer testPool.Close()
 
 	if err = runMigration(ctx, testPool); err != nil {
-		log.Fatalf("error running migration: %v", err)
+		log.Printf("error running migration: %v", err)
+		return 1
 	}
 
 	return m.Run()

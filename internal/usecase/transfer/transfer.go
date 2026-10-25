@@ -77,11 +77,11 @@ func (s *Service) Create(ctx context.Context, fromID, toID uuid.UUID, amount int
 			return toErr
 		}
 
-		if err = from.Withdraw(money); err != nil {
-			return err
+		if errWithdraw := from.Withdraw(money); errWithdraw != nil {
+			return errWithdraw
 		}
-		if err = to.Deposit(money); err != nil {
-			return err
+		if errDeposit := to.Deposit(money); errDeposit != nil {
+			return errDeposit
 		}
 
 		transfer, transferErr := domain.NewTransfer(transferID, fromID, toID, money, s.clock)

@@ -9,7 +9,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/hisshihi/simple-bank/internal/domain"
-	errs "github.com/hisshihi/simple-bank/internal/errors"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
 	"github.com/hisshihi/simple-bank/internal/repository/account/entity"
 )
 

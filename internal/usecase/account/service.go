@@ -2,36 +2,35 @@ package account
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/hisshihi/simple-bank/internal/domain"
-	errs "github.com/hisshihi/simple-bank/internal/errors"
-	"github.com/hisshihi/simple-bank/internal/logger"
-	"github.com/hisshihi/simple-bank/internal/service/account/dto"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
+	"github.com/hisshihi/simple-bank/internal/usecase/account/dto"
 )
 
-type AccountRepository interface {
+type Repository interface {
 	Create(ctx context.Context, account *domain.Account) (*domain.Account, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Account, error)
 }
 
 type Service struct {
-	accountRepo AccountRepository
+	accountRepo Repository
 	clock       func() time.Time
+	log         *slog.Logger
 }
 
-func New(accountRepo AccountRepository, clock func() time.Time) *Service {
-	return &Service{accountRepo: accountRepo, clock: clock}
+func New(accountRepo Repository, clock func() time.Time, log *slog.Logger) *Service {
+	return &Service{accountRepo: accountRepo, clock: clock, log: log}
 }
 
 func (s *Service) Create(ctx context.Context, name, currency string) (dto.CreateRecord, error) {
-	log := logger.FromContext(ctx)
-
 	id, err := uuid.NewV7()
 	if err != nil {
-		log.Error("failed to generate uuid", "error", err)
+		s.log.ErrorContext(ctx, "failed to generate uuid", "err", err)
 		return dto.CreateRecord{}, errs.ErrGenerateUUID
 	}
 
@@ -52,7 +51,7 @@ func (s *Service) Create(ctx context.Context, name, currency string) (dto.Create
 
 	record := dto.Restore(account.ID(), account.Owner(), string(account.Currency()))
 
-	log.Info("record_create", "record", record)
+	s.log.InfoContext(ctx, "record_create", "record", record)
 
 	return record, nil
 }

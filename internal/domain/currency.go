@@ -1,7 +1,7 @@
 package domain
 
 import (
-	errs "github.com/hisshihi/simple-bank/internal/errors"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
 )
 
 type Currency string

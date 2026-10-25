@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	errs "github.com/hisshihi/simple-bank/internal/errors"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
 )
 
 type AccountStatus string

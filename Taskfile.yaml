@@ -1,137 +1,196 @@
 version: '3'
 
+# Универсальный Taskfile для Go-сервисов.
+# Под конкретный сервис обычно правятся только APP и, при необходимости, PB_DIR / MAIN_BRANCH.
+#
+# Быстрый старт:
+#   task tools        — поставить инструменты нужных версий в ./bin
+#   task              — fmt + lint + test + build (проверка перед пушем)
+#   task --list       — все задачи
+
 vars:
-  BIN: ./bin/app
+  APP: simple_bank
+  CMD: ./cmd/{{.APP}}
   BIN_DIR: '{{.ROOT_DIR}}/bin'
-  GOOSE: '{{.BIN_DIR}}/goose'
+  APP_BIN: '{{.BIN_DIR}}/{{.APP}}'
   PB_DIR: internal/api/pb
+  MAIN_BRANCH: main
+
+  # Версии без префикса "v" — так их удобнее сверять с выводом `version`.
+  GOLANGCI_LINT_VERSION: 2.14.0
+  GOOSE_VERSION: 3.29.0
+  BUF_VERSION: 1.73.0
+
+  GOLANGCI_LINT: '{{.BIN_DIR}}/golangci-lint'
+  GOOSE: '{{.BIN_DIR}}/goose'
+  BUF: '{{.BIN_DIR}}/buf'
 
 tasks:
   default:
-    desc: Run all checks and build
+    desc: Проверка перед пушем — fmt, lint, test, build
     cmds:
-      - task: gen
       - task: fmt
       - task: lint
       - task: test
-      - task: test:mini
       - task: build
-      - task: migrate:up
-      - task: migrate:down
-      - task: goose:status
-      - task: golangci:lint
-      - task: golangci:fix
-      - task: golangci:lint:last
-      - task: golangci:fix:last
-      - task: proto
-      - task: proto:lint
-      - task: proto:breaking
 
-  golangci:lint:
-    desc: Run linter
-    cmds:
-      - golangci-lint run
+  # ---------------------------------------------------------------- tools ---
 
-  golangci:fix:
-    desc: Run fix linter
-    cmds:
-      - golangci-lint run --fix
+  tools:
+    desc: Установить инструменты в ./bin (пропускает уже установленные нужной версии)
+    deps: [ tools:golangci-lint, tools:goose, tools:buf ]
 
-  golangci:lint:last:
-    desc: Запуск линтера относительно последнего комита
+  tools:golangci-lint:
+    internal: true
+    status:
+      - '{{.GOLANGCI_LINT}} version 2>/dev/null | grep -qF "{{.GOLANGCI_LINT_VERSION}}"'
+      - '{{.GOLANGCI_LINT}} version 2>/dev/null | grep -qF "$(go env GOVERSION)"'
     cmds:
-      - golangci-lint run --new-from-rev=HEAD~1
+      - GOBIN={{.BIN_DIR}} go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v{{.GOLANGCI_LINT_VERSION}}
 
-  golangci:fix:last:
-    desc: Запуск фикса линтера относительно последнего комита
+  tools:goose:
+    internal: true
+    status:
+      - '{{.GOOSE}} -version 2>/dev/null | grep -qF "{{.GOOSE_VERSION}}"'
     cmds:
-      - golangci-lint run --fix --new-from-rev=HEAD~1
+      - GOBIN={{.BIN_DIR}} go install github.com/pressly/goose/v3/cmd/goose@v{{.GOOSE_VERSION}}
 
-  run:
-    desc: Run the application
+  tools:buf:
+    internal: true
+    status:
+      - '{{.BUF}} --version 2>/dev/null | grep -qF "{{.BUF_VERSION}}"'
     cmds:
-      - go run ./cmd/app
+      - GOBIN={{.BIN_DIR}} go install github.com/bufbuild/buf/cmd/buf@v{{.BUF_VERSION}}
 
-  migrate:up:
-    desc: "Накатывает все миграции"
-    dotenv: [ '.env' ]
-    cmds:
-      - 'goose up'
-
-  migrate:down:
-    desc: 'Откатывание миграции'
-    dotenv: [ '.env' ]
-    cmds:
-      - 'goose down'
-
-  goose:status:
-    desc: 'Вывести статус миграций'
-    dotenv: [ '.env' ]
-    cmds:
-      - 'goose status'
-
-  build:
-    desc: Build the binary
-    cmds:
-      - go build -o {{.BIN}} .
-
-  test:
-    desc: Run tests with race detector
-    cmds:
-      - go test -race -v -cover -count=100 ./...
-
-  test:mini:
-    desc: Run tests with race detector
-    cmds:
-      - go test -race -v -cover -count=1 ./...
-
-  lint:
-    desc: Run golangci-lint
-    cmds:
-      - golangci-lint run ./...
+  # ---------------------------------------------------------- code quality ---
 
   fmt:
-    desc: Format code and tidy mod
+    desc: Форматирование (gofumpt + gci из .golangci.yml)
+    deps: [ tools:golangci-lint ]
     cmds:
-      - go fmt ./...
-      - go mod tidy
+      - '{{.GOLANGCI_LINT}} fmt'
+
+  lint:
+    desc: Линтер по всему проекту
+    deps: [ tools:golangci-lint ]
+    cmds:
+      - '{{.GOLANGCI_LINT}} run'
+
+  lint:fix:
+    desc: Линтер с автофиксом
+    deps: [ tools:golangci-lint ]
+    cmds:
+      - '{{.GOLANGCI_LINT}} run --fix'
+
+  lint:new:
+    desc: Линтер только по изменениям относительно {{.MAIN_BRANCH}} (для legacy-кода)
+    deps: [ tools:golangci-lint ]
+    cmds:
+      - '{{.GOLANGCI_LINT}} run --new-from-merge-base={{.MAIN_BRANCH}}'
+
+  # ----------------------------------------------------------------- tests ---
+
+  test:
+    desc: Тесты с race detector
+    cmds:
+      - go test -race -count=1 ./...
+
+  test:stress:
+    desc: Прогон тестов 100 раз — ловит флаки и гонки
+    cmds:
+      - go test -race -count=100 ./...
+
+  test:cover:
+    desc: Покрытие — coverage.out и coverage.html
+    cmds:
+      - go test -race -count=1 -coverprofile=coverage.out ./...
+      - go tool cover -func=coverage.out | tail -1
+      - go tool cover -html=coverage.out -o coverage.html
+
+  # ----------------------------------------------------------- build / run ---
 
   gen:
-    desc: Run go generate
+    desc: go generate (моки и т.п.)
     cmds:
       - go generate ./...
 
+  tidy:
+    desc: go mod tidy
+    cmds:
+      - go mod tidy
+
+  build:
+    desc: Сборка бинарника в ./bin
+    cmds:
+      - CGO_ENABLED=0 go build -trimpath -o {{.APP_BIN}} {{.CMD}}
+
+  run:
+    desc: Запуск приложения (переменные из .env)
+    dotenv: [ '.env' ]
+    cmds:
+      - go run {{.CMD}}
+
+  clean:
+    desc: Удалить собранный бинарник и отчёты покрытия (инструменты в ./bin остаются)
+    cmds:
+      - rm -f {{.APP_BIN}} coverage.out coverage.html
+
+  # ------------------------------------------------------------ migrations ---
+  # goose читает из .env: GOOSE_DRIVER, GOOSE_DBSTRING, GOOSE_MIGRATION_DIR
+
+  migrate:up:
+    desc: Накатить все миграции
+    deps: [ tools:goose ]
+    dotenv: [ '.env' ]
+    cmds:
+      - '{{.GOOSE}} up'
+
+  migrate:down:
+    desc: Откатить последнюю миграцию
+    deps: [ tools:goose ]
+    dotenv: [ '.env' ]
+    cmds:
+      - '{{.GOOSE}} down'
+
+  migrate:status:
+    desc: Статус миграций
+    deps: [ tools:goose ]
+    dotenv: [ '.env' ]
+    cmds:
+      - '{{.GOOSE}} status'
+
+  migrate:create:
+    desc: 'Новая миграция — task migrate:create -- add_sessions'
+    deps: [ tools:goose ]
+    dotenv: [ '.env' ]
+    requires:
+      vars: [ CLI_ARGS ]
+    cmds:
+      - '{{.GOOSE}} create {{.CLI_ARGS}} sql'
+
+  # ----------------------------------------------------------------- proto ---
+
   proto:
-    desc: Generate protobuf and gRPC code
+    desc: Генерация protobuf и gRPC кода
+    deps: [ tools:buf ]
     sources:
-      - internal/api/proto/**/*.proto
+      - '**/*.proto'
       - buf.yaml
       - buf.gen.yaml
     generates:
-      - "{{.PB_DIR}}/**/*.go"
+      - '{{.PB_DIR}}/**/*.go'
     cmds:
       - rm -rf {{.PB_DIR}}
-      - mkdir -p {{.PB_DIR}}
-      - buf generate
+      - '{{.BUF}} generate'
 
   proto:lint:
-    desc: Lint proto files
+    desc: Линтер proto-файлов
+    deps: [ tools:buf ]
     cmds:
-      - buf lint
+      - '{{.BUF}} lint'
 
   proto:breaking:
-    desc: Check for breaking changes against main
+    desc: Проверка ломающих изменений относительно {{.MAIN_BRANCH}}
+    deps: [ tools:buf ]
     cmds:
-      - buf breaking --against '.git#branch=main'
-
-  evans:
-    desc: Start Evans REPL
-    cmds:
-      - evans --port 9092 --host localhost --path proto --proto verify.proto repl
-
-  clean:
-    desc: Clean binaries and coverage
-    cmds:
-      - rm -rf bin/
-      - rm -f coverage.out coverage.html
-      - go clean
+      - "{{.BUF}} breaking --against '.git#branch={{.MAIN_BRANCH}}'"

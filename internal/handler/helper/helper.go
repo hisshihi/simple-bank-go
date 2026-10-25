@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 
-	errs "github.com/hisshihi/simple-bank/internal/errors"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
 )
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request) error
@@ -88,7 +87,6 @@ func RespondError(w http.ResponseWriter, err error) {
 		}
 	}
 
-	slog.Error("внутренняя ошибка", "error", err)
 	_ = RespondJSON(w, http.StatusInternalServerError, errorResponse{"server_error", "Внутренняя ошибка сервера. Пожалуйста, попробуйте позже или свяжитесь с поддержкой."})
 }
 

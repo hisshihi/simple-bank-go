@@ -12,9 +12,9 @@ packages:
   github.com/hisshihi/simple-bank/internal/repository/transfer:
     config:
       all: true
-  github.com/hisshihi/simple-bank/internal/service/account:
+  github.com/hisshihi/simple-bank/internal/usecase/account:
     config:
       all: true
-  github.com/hisshihi/simple-bank/internal/service/transfer:
+  github.com/hisshihi/simple-bank/internal/usecase/transfer:
     config:
       all: true

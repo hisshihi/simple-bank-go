@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/hisshihi/simple-bank/internal/handler/helper"
-	"github.com/hisshihi/simple-bank/internal/service/account/dto"
+	"github.com/hisshihi/simple-bank/internal/usecase/account/dto"
 )
 
 type Service interface {

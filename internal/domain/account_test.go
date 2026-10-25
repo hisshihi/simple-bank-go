@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	errs "github.com/hisshihi/simple-bank/internal/errors"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
 )
 
 func TestNewAccount(t *testing.T) {

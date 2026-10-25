@@ -17,8 +17,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("err to load config: %v", err)
 	}
-	logger.Init(parseLogLevel(cfg.LoggerLevel), cfg.LoggerPretty)
-	err = app.New(cfg).Run()
+	initLog := logger.Init(parseLogLevel(cfg.LoggerLevel), cfg.LoggerPretty)
+	slog.SetDefault(initLog)
+	err = app.New(cfg, initLog).Run()
 	if err != nil {
 		log.Fatal(err)
 	}

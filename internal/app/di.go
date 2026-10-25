@@ -15,14 +15,16 @@ import (
 	accountrepository "github.com/hisshihi/simple-bank/internal/repository/account"
 	entryrepository "github.com/hisshihi/simple-bank/internal/repository/entry"
 	transferrepository "github.com/hisshihi/simple-bank/internal/repository/transfer"
-	accountservice "github.com/hisshihi/simple-bank/internal/service/account"
-	transferservice "github.com/hisshihi/simple-bank/internal/service/transfer"
+	accountservice "github.com/hisshihi/simple-bank/internal/usecase/account"
+	transferservice "github.com/hisshihi/simple-bank/internal/usecase/transfer"
 )
 
 type DiContainer struct {
-	config *config.Config
+	cfg *config.Config
 
 	db *database.DB
+
+	log *slog.Logger
 
 	// repo
 	accountRepo  *accountrepository.Repo
@@ -40,18 +42,19 @@ type DiContainer struct {
 	txManager *manager.Manager
 }
 
-func NewDIContainer(config *config.Config) *DiContainer {
+func NewDIContainer(cfg *config.Config, log *slog.Logger) *DiContainer {
 	return &DiContainer{
-		config: config,
+		cfg: cfg,
+		log: log,
 	}
 }
 
 func (c *DiContainer) DB() *database.DB {
 	if c.db == nil {
-		dsn := c.config.DSN()
+		dsn := c.cfg.DSN()
 		db, err := database.New(dsn)
 		if err != nil {
-			slog.Error(err.Error())
+			c.log.Error("ошибка подключения к бд", "err", err)
 			os.Exit(1)
 		}
 
@@ -85,14 +88,14 @@ func (c *DiContainer) EntryRepo() *entryrepository.Repo {
 
 func (c *DiContainer) AccountService() *accountservice.Service {
 	if c.accountService == nil {
-		c.accountService = accountservice.New(c.AccountRepo(), func() time.Time { return time.Now().UTC() })
+		c.accountService = accountservice.New(c.AccountRepo(), func() time.Time { return time.Now().UTC() }, c.log)
 	}
 	return c.accountService
 }
 
 func (c *DiContainer) AccountHandler() *accounthandler.Handler {
 	if c.accountHandler == nil {
-		c.accountHandler = accounthandler.NewHandler(c.AccountService())
+		c.accountHandler = accounthandler.NewHandler(c.AccountService(), c.log)
 	}
 	return c.accountHandler
 }

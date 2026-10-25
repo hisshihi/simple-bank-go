@@ -3,6 +3,8 @@ package account
 import (
 	"context"
 	"errors"
+	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -11,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hisshihi/simple-bank/internal/domain"
-	errs "github.com/hisshihi/simple-bank/internal/errors"
-	"github.com/hisshihi/simple-bank/internal/service/account/mocks"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
+	"github.com/hisshihi/simple-bank/internal/usecase/account/mocks"
 )
 
 func TestService_Create(t *testing.T) {
@@ -20,6 +22,8 @@ func TestService_Create(t *testing.T) {
 	clock := func() time.Time { return fixedTime }
 	owner := "owner"
 	currency := "RUB"
+	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})
+	log := slog.New(handler)
 
 	t.Run("success", func(t *testing.T) {
 		repo := mocks.NewMockAccountRepository(t)
@@ -35,7 +39,7 @@ func TestService_Create(t *testing.T) {
 			}).
 			Once()
 
-		svc := New(repo, clock)
+		svc := New(repo, clock, log)
 
 		record, err := svc.Create(t.Context(), owner, currency)
 		require.NoError(t, err)
@@ -53,7 +57,7 @@ func TestService_Create(t *testing.T) {
 			Return(nil, wantErr).
 			Once()
 
-		svc := New(repo, clock)
+		svc := New(repo, clock, log)
 		_, err := svc.Create(t.Context(), owner, currency)
 		require.ErrorIs(t, err, wantErr)
 	})
@@ -61,7 +65,7 @@ func TestService_Create(t *testing.T) {
 	t.Run("invalid currency - repo не должен вызываться", func(t *testing.T) {
 		repo := mocks.NewMockAccountRepository(t)
 
-		svc := New(repo, clock)
+		svc := New(repo, clock, log)
 		_, err := svc.Create(t.Context(), owner, "INVALID_CURRENCY")
 		require.ErrorIs(t, err, errs.ErrCurrencyIsNotSupported)
 	})
@@ -69,7 +73,7 @@ func TestService_Create(t *testing.T) {
 	t.Run("domain validation error stops before repo call", func(t *testing.T) {
 		repo := mocks.NewMockAccountRepository(t)
 
-		svc := New(repo, clock)
+		svc := New(repo, clock, log)
 		_, err := svc.Create(t.Context(), "", currency)
 		require.ErrorIs(t, err, errs.ErrOwnerRequired)
 	})

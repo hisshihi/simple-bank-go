@@ -20,7 +20,7 @@ type Config struct {
 	HTTPAddr string `env:"HTTP_ADDR"`
 }
 
-func (c Config) DSN() string {
+func (c *Config) DSN() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		c.DBUser, c.DBPass, c.DBHost, c.DBPort, c.DBName,

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hisshihi/simple-bank/internal/domain"
-	errs "github.com/hisshihi/simple-bank/internal/errors"
+	errs "github.com/hisshihi/simple-bank/internal/errs"
 	"github.com/hisshihi/simple-bank/internal/helper"
 )
 
