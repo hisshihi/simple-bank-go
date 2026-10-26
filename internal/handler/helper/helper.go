@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	errs "github.com/hisshihi/simple-bank/internal/errs"
+	"github.com/hisshihi/simple-bank/internal/logger"
 )
 
 type HandlerFunc func(w http.ResponseWriter, r *http.Request) error
@@ -15,6 +16,7 @@ type HandlerFunc func(w http.ResponseWriter, r *http.Request) error
 func Adapt(h HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := h(w, r); err != nil {
+			logger.FromContext(r.Context()).ErrorContext(r.Context(), "ошибка обработки запроса", "err", err)
 			RespondError(w, err)
 		}
 	}
@@ -80,6 +82,12 @@ type errorResponse struct {
 }
 
 func RespondError(w http.ResponseWriter, err error) {
+	// Ошибки уровня HTTP (кривой JSON, невалидный ID в пути) — со своим статусом
+	if httpErr, ok := errors.AsType[*HTTPError](err); ok {
+		_ = RespondJSON(w, httpErr.Status, errorResponse{Error: httpErr.Code, ErrorDescription: httpErr.Description})
+		return
+	}
+
 	for sentinel, info := range errorMapping {
 		if errors.Is(err, sentinel) {
 			_ = RespondJSON(w, info.status, errorResponse{Error: info.code, ErrorDescription: info.description})
