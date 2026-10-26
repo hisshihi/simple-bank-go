@@ -11,10 +11,10 @@ import (
 	"github.com/hisshihi/simple-bank/internal/closer"
 	"github.com/hisshihi/simple-bank/internal/config"
 	"github.com/hisshihi/simple-bank/internal/database"
-	accounthandler "github.com/hisshihi/simple-bank/internal/handler/account"
 	accountrepository "github.com/hisshihi/simple-bank/internal/repository/account"
 	entryrepository "github.com/hisshihi/simple-bank/internal/repository/entry"
 	transferrepository "github.com/hisshihi/simple-bank/internal/repository/transfer"
+	accounthandler "github.com/hisshihi/simple-bank/internal/transport/http/account"
 	accountservice "github.com/hisshihi/simple-bank/internal/usecase/account"
 	transferservice "github.com/hisshihi/simple-bank/internal/usecase/transfer"
 )

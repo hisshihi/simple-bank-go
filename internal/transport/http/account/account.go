@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/hisshihi/simple-bank/internal/handler/helper"
+	"github.com/hisshihi/simple-bank/internal/transport/http/helper"
 )
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) error {

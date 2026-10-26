@@ -6,7 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/hisshihi/simple-bank/internal/handler/helper"
+	"github.com/hisshihi/simple-bank/internal/transport/http/helper"
 	"github.com/hisshihi/simple-bank/internal/usecase/account/dto"
 )
 
